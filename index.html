@@ -16,22 +16,26 @@
       max-width: 1000px;
       margin: auto;
       position: relative;
+      /* Make sure overflow visible so lines can show */
+      overflow: visible;
     }
 
     .label-row {
       position: relative;
-      height: 3.5em; /* vertical space for labels and lines */
-      margin-bottom: 0.5em; /* space between labels/lines and bar */
+      height: 3.5em; /* space for labels */
+      margin-bottom: 0.5em;
+      /* Make sure lines can show */
+      overflow: visible;
+      z-index: 10;
     }
 
     .label-wrapper {
       position: absolute;
-      bottom: 15px; /* reduced vertical space to half */
+      bottom: 15px; /* reduced vertical space */
       white-space: nowrap;
       transform: translateX(-50%);
-      transition: left 0.3s ease;
       user-select: none;
-      z-index: 5;
+      z-index: 20; /* above lines */
     }
 
     .goal-label {
@@ -43,14 +47,14 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       line-height: 1.1;
       position: relative;
-      z-index: 5;
+      z-index: 20;
     }
 
     .indicator-line {
       position: absolute;
       width: 2px;
       background: #000;
-      z-index: 1;
+      z-index: 15; /* below label but above bar */
     }
 
     @media (max-width: 500px) {
@@ -69,7 +73,7 @@
       border-radius: 8px;
       height: 24px;
       overflow: hidden;
-      z-index: 2;
+      z-index: 5;
     }
 
     .bar-initial-bg {
@@ -88,7 +92,7 @@
       top: 0;
       height: 100%;
       background: #f4c421;
-      z-index: 2;
+      z-index: 3;
       display: flex;
       align-items: center;
       justify-content: flex-end;
@@ -104,6 +108,8 @@
       font-size: 1rem;
       line-height: 1.4;
       word-wrap: break-word;
+      z-index: 10;
+      position: relative;
     }
   </style>
 </head>
@@ -172,7 +178,7 @@
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
       wrapper.style.left = `${percent}%`;
-      wrapper.style.bottom = '15px'; // updated vertical space
+      wrapper.style.bottom = '15px';
 
       const label = document.createElement('div');
       label.className = 'goal-label';
@@ -231,19 +237,24 @@
       // Check for overlap, if so push initial label left and final label right
       if (initialLabelRightEdge + minGap > finalLabelLeftEdge) {
         const overlap = (initialLabelRightEdge + minGap) - finalLabelLeftEdge;
-        initialLeftPx = Math.max(initialLeftPx - overlap / 2, initialWidth / 2);
-        finalLeftPx = Math.min(finalLeftPx + overlap / 2, containerRect.width - finalWidth / 2);
+
+        // Shift initial label left (if possible)
+        if (initialLabelLeftEdge - overlap >= 0) {
+          initialLeftPx -= overlap / 2;
+        }
+        // Shift final label right (if possible)
+        if (finalLabelRightEdge + overlap <= containerRect.width) {
+          finalLeftPx += overlap / 2;
+        }
       }
 
-      const initialPercent = (initialLeftPx / containerRect.width) * 100;
-      const finalPercent = (finalLeftPx / containerRect.width) * 100;
-
-      initialWrapper.style.left = `${initialPercent}%`;
-      finalWrapper.style.left = `${finalPercent}%`;
+      // Apply final left position as % of container width
+      initialWrapper.style.left = `${(initialLeftPx / containerRect.width) * 100}%`;
+      finalWrapper.style.left = `${(finalLeftPx / containerRect.width) * 100}%`;
     }
 
     function updateIndicatorLines(initialWrapper, finalWrapper) {
-      // Clear existing lines first
+      // Clear any existing lines
       const existingLines = labelRow.querySelectorAll('.indicator-line');
       existingLines.forEach(line => line.remove());
 
@@ -254,7 +265,7 @@
         const label = wrapper.querySelector('.goal-label');
         const labelRect = label.getBoundingClientRect();
 
-        // Center bottom of label relative to container
+        // Bottom center of label relative to container
         const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
         const labelBottomY = labelRect.bottom - containerRect.top;
 
@@ -265,16 +276,14 @@
         // Bar top relative to container
         const barTopY = barRect.top - containerRect.top;
 
-        // Create line div
+        // Create vertical line div
         const line = document.createElement('div');
         line.className = 'indicator-line';
 
-        // Calculate height of vertical line from bar top to label bottom
+        // Calculate vertical height from bar top to label bottom
         const lineHeight = labelBottomY - barTopY;
 
         line.style.height = `${lineHeight}px`;
-
-        // Position line so its center aligns with label center
         line.style.left = `${labelCenterX}px`;
         line.style.top = `${barTopY}px`;
 
