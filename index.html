@@ -20,20 +20,32 @@
     }
 
     .bar-bg {
-      background: #e0e0e0;
-      border-radius: 8px;
-      overflow: visible;
+      display: flex;
       height: 20px;
+      border-radius: 8px;
+      overflow: hidden;
       position: relative;
-      width: 100%;
+    }
+
+    .bar-main-bg {
+      background: #f9f9f9;
+      height: 100%;
+    }
+
+    .bar-stretch-bg {
+      background: #e0e0e0;
+      height: 100%;
     }
 
     .bar-fill {
       background: #f9ca24;
       height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 0%;
       transition: width 0.6s ease;
-      position: relative;
+      z-index: 1;
     }
 
     .bar-text {
@@ -43,6 +55,7 @@
       font-size: 0.85rem;
       font-weight: bold;
       color: #333;
+      z-index: 2;
     }
 
     .summary {
@@ -57,6 +70,7 @@
       height: 100%;
       width: 2px;
       background: #000;
+      z-index: 2;
     }
 
     .goal-label {
@@ -66,12 +80,15 @@
       font-size: 0.75rem;
       color: #000;
       white-space: nowrap;
+      z-index: 2;
     }
   </style>
 </head>
 <body>
   <div class="bar-container">
     <div class="bar-bg" id="bar-bg">
+      <div class="bar-main-bg" id="main-bg"></div>
+      <div class="bar-stretch-bg" id="stretch-bg"></div>
       <div class="bar-fill" id="bar-fill">
         <div class="bar-text" id="bar-text">0%</div>
       </div>
@@ -87,22 +104,30 @@
 
         const { total, goal, stretchGoal } = data;
 
+        const percentOfStretch = Math.min((total / stretchGoal) * 100, 100);
+        const percentOfMain = Math.min((total / goal) * 100, 100);
+
         const barFill = document.getElementById('bar-fill');
         const barText = document.getElementById('bar-text');
         const summary = document.getElementById('summary');
         const barBg = document.getElementById('bar-bg');
+        const mainBg = document.getElementById('main-bg');
+        const stretchBg = document.getElementById('stretch-bg');
 
-        const percentOfStretch = Math.min((total / stretchGoal) * 100, 100);
-        const percentOfMain = Math.min((total / goal) * 100, 100);
+        // Set background widths for main and stretch segments
+        const mainPercent = (goal / stretchGoal) * 100;
+        mainBg.style.width = `${mainPercent}%`;
+        stretchBg.style.width = `${100 - mainPercent}%`;
 
+        // Update fill
         barFill.style.width = `${percentOfStretch}%`;
         barText.textContent = `${percentOfMain.toFixed(1)}% of initial goal`;
 
         const remaining = Math.max(stretchGoal - total, 0);
         summary.innerHTML = `$${total.toLocaleString()} raised of initial $10,000 goal!<br>$${remaining.toLocaleString()} remaining to meet our final $12,000 goal!`;
 
-        // Add markers inside bar-bg
-        function addMarker(percent, labelText) {
+        // Add markers and labels
+        function addMarker(percent, labelText, offsetRight = false) {
           const marker = document.createElement('div');
           marker.className = 'marker';
           marker.style.left = `${percent}%`;
@@ -112,12 +137,16 @@
           label.textContent = labelText;
           label.style.left = `${percent}%`;
 
+          if (offsetRight) {
+            label.style.transform = 'translateX(-100%)'; // keep it inside the bar
+          }
+
           barBg.appendChild(marker);
           barBg.appendChild(label);
         }
 
         addMarker((goal / stretchGoal) * 100, '$10,000 initial goal');
-        addMarker(100, '$12,000 final goal');
+        addMarker(100, '$12,000 final goal', true);
 
       } catch (error) {
         console.error("Error fetching progress:", error);
