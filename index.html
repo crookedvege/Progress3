@@ -1,125 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fundraising Progress</title>
-  <style>
-    @font-face {
-      font-family: 'OtakiVegeBags';
-      src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fundraising Progress</title>
+<style>
+  @font-face {
+    font-family: 'OtakiVegeBags';
+    src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
 
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 2em;
-    }
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 2em;
+  }
 
-    #progress-container {
-      max-width: 1000px;
-      margin: auto;
-      position: relative;
-      overflow: visible;
-    }
+  #progress-container {
+    max-width: 1000px;
+    margin: auto;
+    position: relative;
+    overflow: visible;
+  }
 
+  #labels-container {
+    position: relative;
+    height: 3.5em;
+    margin-bottom: 0.5em;
+    overflow: visible;
+    user-select: none;
+  }
+
+  .label-wrapper {
+    position: absolute;
+    bottom: 10px;
+    white-space: nowrap;
+    z-index: 20;
+    background: #fff;
+    padding: 6px 18px;
+    border-radius: 16px / 12px;
+    box-shadow: 0 3px 7px rgba(0,0,0,0.15);
+    font-family: 'OtakiVegeBags', sans-serif;
+    font-size: 1.4rem; /* 35% larger than base 1rem */
+    line-height: 1.2;
+    color: #000;
+    text-align: center;
+  }
+
+  .label-wrapper br {
+    line-height: 1.1;
+  }
+
+  svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 15;
+  }
+
+  .indicator-path {
+    fill: none;
+    stroke: black;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  #bar-bg {
+    position: relative;
+    background: #ddd;
+    border-radius: 8px;
+    height: 24px;
+    overflow: hidden;
+    z-index: 5;
+  }
+
+  #bar-initial-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: #fff9c4;
+    z-index: 1;
+    border-radius: 8px 0 0 8px;
+  }
+
+  #bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: #f4c421;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    color: #000;
+    font-weight: bold;
+    border-radius: 8px 0 0 8px;
+    box-sizing: border-box;
+  }
+
+  #bar-initial-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: black;
+    z-index: 4;
+  }
+
+  #bar-progress-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #c49000;
+    z-index: 5;
+  }
+
+  .progress-text {
+    margin-top: 1em;
+    font-family: 'OtakiVegeBags', sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    position: relative;
+    z-index: 10;
+  }
+
+  @media (max-width: 500px) {
     #labels-container {
-      position: relative;
-      height: 3.5em;
-      margin-bottom: 0.5em;
-      overflow: visible;
-      user-select: none;
+      height: 4em;
     }
-
     .label-wrapper {
-      position: absolute;
-      bottom: 10px;
-      white-space: nowrap;
-      z-index: 20;
-      background: #fff;
+      font-size: 1.1rem;
       padding: 4px 12px;
-      border-radius: 999px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      font-family: 'OtakiVegeBags', sans-serif;
-      font-size: 1.22rem;
-      color: #000;
-      line-height: 1.2;
-      text-align: center;
     }
-
-    svg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 60px;
-      pointer-events: none;
-      overflow: visible;
-      z-index: 15;
-    }
-
-    .indicator-path {
-      fill: none;
-      stroke: black;
-      stroke-width: 2;
-      stroke-linecap: round;
-    }
-
-    #bar-bg {
-      position: relative;
-      background: #ddd;
-      border-radius: 8px;
-      height: 24px;
-      overflow: hidden;
-      z-index: 5;
-    }
-
-    #bar-initial-bg {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      background-color: #fff9c4;
-      z-index: 1;
-      border-radius: 8px 0 0 8px;
-    }
-
-    #bar-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      background: #f4c421;
-      z-index: 3;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding-right: 6px;
-      color: #000;
-      font-weight: bold;
-      border-radius: 8px 0 0 8px;
-      box-sizing: border-box;
-    }
-
-    .progress-text {
-      margin-top: 1em;
-      font-size: 1rem;
-      line-height: 1.4;
-      word-wrap: break-word;
-      position: relative;
-      z-index: 10;
-    }
-
-    @media (max-width: 500px) {
-      #labels-container {
-        height: 4em;
-      }
-      .label-wrapper {
-        font-size: 1.058rem;
-        padding: 4px 10px;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <div id="progress-container">
@@ -128,6 +153,8 @@
     <div id="bar-bg">
       <div id="bar-initial-bg"></div>
       <div id="bar-fill">Loading…</div>
+      <div id="bar-initial-divider"></div>
+      <div id="bar-progress-divider"></div>
     </div>
 
     <div class="progress-text" id="progress-line1">Loading…</div>
@@ -145,14 +172,17 @@
     const progressLine2 = document.getElementById('progress-line2');
     const progressContainer = document.getElementById('progress-container');
     const barBg = document.getElementById('bar-bg');
+    const initialDivider = document.getElementById('bar-initial-divider');
+    const progressDivider = document.getElementById('bar-progress-divider');
 
+    // Create SVG once and reuse
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     labelsContainer.appendChild(svg);
 
     function createLabel(percent, text) {
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
-      wrapper.innerHTML = text;
+      wrapper.innerHTML = text.replace(/ /g, '<br>'); // put spaces as line breaks
       wrapper.style.left = percent + '%';
       return wrapper;
     }
@@ -194,7 +224,7 @@
       const barRect = barBg.getBoundingClientRect();
 
       const barTopY = barRect.top - containerRect.top;
-      const targetY = barTopY - 1;
+      const targetY = barTopY - 1; // 1px above bar top
 
       const initialLabelRect = initialLabel.getBoundingClientRect();
       const finalLabelRect = finalLabel.getBoundingClientRect();
@@ -208,8 +238,10 @@
       const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
       const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
+      // Initial goal line: convex down curve (smiley) bending below straight line
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
+
       const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
       const initCtrlYOffset = 12;
       const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
@@ -222,8 +254,10 @@
       );
       svg.appendChild(pathInit);
 
+      // Final goal line: concave up curve (sad face) bending above straight line
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
+
       const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
       const finalCtrlYOffset = 12;
       const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
@@ -237,48 +271,85 @@
       svg.appendChild(pathFinal);
     }
 
-    function update() {
-      fetch('/.netlify/functions/getProgress')
-        .then(res => res.json())
-        .then(data => {
-          const raised = data.total;
-          const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
-          const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
+    function update(raised) {
+      const containerRect = progressContainer.getBoundingClientRect();
+      const barRect = barBg.getBoundingClientRect();
 
-          barFill.style.width = percentTotal + '%';
-          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
+      const percentOfFinal = Math.min(raised / FINAL_GOAL, 1);
+      const percentOfInitial = Math.min(raised / INITIAL_GOAL, 1);
 
-          const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
-          barInitialBg.style.width = initialBgWidth + '%';
+      // Width of initial goal background
+      const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * barRect.width;
+      barInitialBg.style.width = initialBgWidth + 'px';
 
-          const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
-          const remainingFinal = Math.max(0, FINAL_GOAL - raised);
+      // Width of fill bar
+      barFill.style.width = (percentOfFinal * barRect.width) + 'px';
 
-          progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
-          progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+      // Adjust border radius on fill based on progress
+      if (raised >= FINAL_GOAL) {
+        barFill.style.borderRadius = '8px';
+      } else if (raised >= INITIAL_GOAL) {
+        barFill.style.borderRadius = '8px 0 0 8px';
+      } else {
+        barFill.style.borderRadius = '8px 0 0 8px';
+      }
 
-          labelsContainer.innerHTML = '';
-          labelsContainer.appendChild(svg);
+      // Round percentage text (no decimals)
+      const percentRounded = Math.round(percentOfInitial * 100);
 
-          const initialLabel = createLabel(initialBgWidth, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
-          const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
+      // Progress text lines
+      if (raised < INITIAL_GOAL) {
+        progressLine1.textContent = `${percentRounded}% of first $${INITIAL_GOAL.toLocaleString()} goal!`;
+        const diff = INITIAL_GOAL - raised;
+        progressLine2.textContent = `$${diff.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
+      } else {
+        progressLine1.textContent = `Reached initial goal!`;
+        const diff = FINAL_GOAL - raised;
+        if (diff > 0) {
+          progressLine2.textContent = `$${diff.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
+        } else {
+          progressLine2.textContent = `Final goal reached! Thank you!`;
+        }
+      }
 
-          labelsContainer.appendChild(initialLabel);
-          labelsContainer.appendChild(finalLabel);
+      // Clear old labels
+      labelsContainer.innerHTML = '';
+      labelsContainer.appendChild(svg);
 
-          adjustLabels(initialLabel, finalLabel);
-          drawIndicatorLines(initialLabel, finalLabel);
-        })
-        .catch(err => {
-          console.error(err);
-          barFill.textContent = 'Error loading';
-          progressLine1.textContent = '';
-          progressLine2.textContent = '';
-        });
+      // Create labels with line breaks
+      const initialLabel = createLabel((INITIAL_GOAL / FINAL_GOAL) * 100, 'Initial goal<br>$10,000');
+      const finalLabel = createLabel(100, 'Final goal<br>$12,000');
+
+      labelsContainer.appendChild(initialLabel);
+      labelsContainer.appendChild(finalLabel);
+
+      // Position labels nicely, prevent overlap
+      adjustLabels(initialLabel, finalLabel);
+
+      // Draw curved indicator lines
+      drawIndicatorLines(initialLabel, finalLabel);
+
+      // Position the new black and darker yellow vertical dividers:
+
+      const initialDividerLeft = (INITIAL_GOAL / FINAL_GOAL) * barRect.width;
+      initialDivider.style.left = initialDividerLeft + 'px';
+
+      const currentProgressLeft = Math.min(raised / FINAL_GOAL, 1) * barRect.width;
+      progressDivider.style.left = currentProgressLeft + 'px';
+
+      if (raised < INITIAL_GOAL) {
+        progressDivider.style.display = 'block';
+      } else {
+        progressDivider.style.display = 'none';
+      }
     }
 
-    window.addEventListener('resize', update);
-    update();
+    // Example usage: Replace with your live data
+    let raisedAmount = 7450; // example
+    update(raisedAmount);
+
+    // For testing dynamic resize (optional)
+    window.addEventListener('resize', () => update(raisedAmount));
   </script>
 </body>
 </html>
