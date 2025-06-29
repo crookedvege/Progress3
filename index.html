@@ -100,37 +100,30 @@
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
 
-    // Fetch from your backend (replace with your real endpoint)
-    fetch('/.netlify/functions/get-total')
-      .then(res => res.json())
-      .then(data => {
-        const raised = data.total;
-        const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
-        const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
+    (function () {
+  const raised = 8410; // <== Replace this with your real value later
+  const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+  const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
-        // Fill bar
-        barFill.style.width = `${percentTotal}%`;
-        barFill.textContent = `${percentInitial.toFixed(1)}% of initial goal`;
+  // Fill bar
+  barFill.style.width = `${percentTotal}%`;
+  barFill.textContent = `${percentInitial.toFixed(1)}% of initial goal`;
 
-        // Initial background
-        const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
-        barInitialBg.style.width = `${initialBgWidth}%`;
+  // Initial background
+  const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
+  barInitialBg.style.width = `${initialBgWidth}%`;
 
-        // Text
-        progressText.textContent = `$${raised.toLocaleString()} raised of initial $${INITIAL_GOAL.toLocaleString()} goal!`;
+  // Text
+  progressText.textContent = `$${raised.toLocaleString()} raised of initial $${INITIAL_GOAL.toLocaleString()} goal!`;
 
-        const remaining = Math.max(0, FINAL_GOAL - raised);
-        stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
+  const remaining = Math.max(0, FINAL_GOAL - raised);
+  stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        // Markers
-        addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `$${INITIAL_GOAL.toLocaleString()} initial goal`);
-        addMarker(100, `$${FINAL_GOAL.toLocaleString()} final goal`, true);
-      })
-      .catch(err => {
-        console.error(err);
-        barFill.textContent = 'Error loading';
-        progressText.textContent = '';
-      });
+  // Markers
+  addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `$${INITIAL_GOAL.toLocaleString()} initial goal`);
+  addMarker(100, `$${FINAL_GOAL.toLocaleString()} final goal`, true);
+})();
+
 
     function addMarker(percent, labelText, alignRight = false) {
       const marker = document.createElement('div');
