@@ -20,13 +20,13 @@
 
     .label-row {
       position: relative;
-      height: 2.5em; /* increased for spacing */
-      margin-bottom: 0.3em;
+      height: 3.5em; /* increased for spacing */
+      margin-bottom: 0.5em; /* space between labels and bar */
     }
 
     .label-wrapper {
       position: absolute;
-      bottom: 0;
+      bottom: 30px; /* move labels 30px above bar */
       white-space: nowrap;
       transform: translateX(-50%);
       transition: left 0.3s ease;
@@ -52,7 +52,7 @@
 
     @media (max-width: 500px) {
       .label-row {
-        height: 3em;
+        height: 4em;
       }
       .goal-label {
         font-size: 0.65rem;
@@ -168,7 +168,7 @@
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
       wrapper.style.left = `${percent}%`;
-      wrapper.style.bottom = '0';
+      wrapper.style.bottom = '30px'; // same as CSS for vertical position
 
       const label = document.createElement('div');
       label.className = 'goal-label';
