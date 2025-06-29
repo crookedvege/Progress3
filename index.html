@@ -20,8 +20,8 @@
 
     #labels-container {
       position: relative;
-      height: 3.5em;
-      margin-bottom: 0.5em;
+      height: 3em;
+      margin-bottom: 0.25em;
       overflow: visible;
     }
 
@@ -29,25 +29,13 @@
       position: absolute;
       top: 0;
       white-space: nowrap;
-      font-size: 0.75rem;
-      color: #000;
-      background: #fff;
-      border: 1px solid #aaa;
-      padding-right: 0.25em;
+      font-size: 0.8rem;
+      background: #ffffff;
+      border: 1px solid #ccc;
+      padding: 2px 6px;
+      border-radius: 4px;
       user-select: none;
       pointer-events: none;
-      box-sizing: border-box;
-    }
-
-    /* Ensure initial label sticks left, final sticks right inside container */
-    #initial-label {
-      left: 0;
-      transform: translateX(0);
-    }
-
-    #final-label {
-      right: 0;
-      transform: translateX(0);
     }
 
     .bar-bg {
@@ -97,8 +85,8 @@
     .indicator-line {
       position: absolute;
       height: 2px;
-      background: #555;
-      z-index: 10;
+      background: #333;
+      z-index: 5;
       pointer-events: none;
       transform-origin: 0 0;
     }
@@ -140,7 +128,7 @@
         const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
         barInitialBg.style.width = `${initialBgWidth}%`;
 
-        progressText.textContent = `$${raised.toLocaleString()} raised! We're only $${Math.max(0, INITIAL_GOAL - raised).toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${Math.max(0, FINAL_GOAL - raised).toLocaleString()} from meeting final $${FINAL_GOAL.toLocaleString()} goal!`;
+        progressText.textContent = `$${raised.toLocaleString()} raised!\nWe're only $${Math.max(0, INITIAL_GOAL - raised).toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${Math.max(0, FINAL_GOAL - raised).toLocaleString()} from meeting final $${FINAL_GOAL.toLocaleString()} goal!`;
 
         // Clear old labels & lines
         labelsContainer.innerHTML = '';
@@ -148,18 +136,16 @@
         // Create labels
         const initialLabel = document.createElement('div');
         initialLabel.className = 'label-wrapper';
-        initialLabel.id = 'initial-label';
         initialLabel.textContent = `initial goal $${INITIAL_GOAL.toLocaleString()}`;
 
         const finalLabel = document.createElement('div');
         finalLabel.className = 'label-wrapper';
-        finalLabel.id = 'final-label';
         finalLabel.textContent = `final goal $${FINAL_GOAL.toLocaleString()}`;
 
         labelsContainer.appendChild(initialLabel);
         labelsContainer.appendChild(finalLabel);
 
-        // Position labels & draw indicator lines
+        // Position labels and draw lines
         positionLabelsAndDrawLines(initialLabel, finalLabel);
       })
       .catch(err => {
@@ -169,68 +155,53 @@
       });
 
     function positionLabelsAndDrawLines(initialLabel, finalLabel) {
-      // Wait for layout to settle
       requestAnimationFrame(() => {
         const containerRect = progressContainer.getBoundingClientRect();
         const barRect = barBg.getBoundingClientRect();
 
-        // === Position initial label ===
-        initialLabel.style.top = '0px';
-        initialLabel.style.left = '0px';
-        initialLabel.style.transform = 'translateX(0)';
+        const labelOffsetY = 0; // keep labels close to the bar
 
-        // === Position final label ===
-        const finalLabelWidth = finalLabel.offsetWidth;
-        let finalLeft = barRect.right - containerRect.left - finalLabelWidth;
-        if (finalLeft < 0) finalLeft = 0;
-        finalLabel.style.top = '0px';
-        finalLabel.style.left = `${finalLeft}px`;
-        finalLabel.style.transform = 'translateX(0)';
+        // Get positions for bar points
+        const barLeft = barRect.left - containerRect.left;
+        const barWidth = barRect.width;
+        const barTop = barRect.top - containerRect.top;
 
-        // Remove old indicator lines if any
-        const oldLines = labelsContainer.querySelectorAll('.indicator-line');
-        oldLines.forEach(line => line.remove());
+        const initialX = barLeft + (INITIAL_GOAL / FINAL_GOAL) * barWidth;
+        const finalX = barLeft + barWidth;
 
-        // Draw angled indicator lines
-        drawAngledIndicatorLine(initialLabel, (INITIAL_GOAL / FINAL_GOAL) * barRect.width);
-        drawAngledIndicatorLine(finalLabel, barRect.width);
+        // Place labels
+        placeLabelWithLine(initialLabel, initialX, labelOffsetY, barTop);
+        placeLabelWithLine(finalLabel, finalX, labelOffsetY, barTop);
       });
     }
 
-    function drawAngledIndicatorLine(label, barXOffset) {
+    function placeLabelWithLine(label, targetX, offsetY, barTop) {
+      const labelsContainer = document.getElementById('labels-container');
       const containerRect = progressContainer.getBoundingClientRect();
-      const barRect = barBg.getBoundingClientRect();
-      const labelRect = label.getBoundingClientRect();
 
-      // Positions relative to container
-      const barLeftRelative = barRect.left - containerRect.left;
-      const barX = barLeftRelative + barXOffset;
+      const labelWidth = label.offsetWidth;
+      const labelHeight = label.offsetHeight;
 
-      // Label bottom center point relative to container
-      const labelCenterX = labelRect.left - containerRect.left + labelRect.width / 2;
-      const labelBottomY = labelRect.bottom - containerRect.top;
+      const labelX = Math.max(0, targetX - labelWidth / 2);
+      const labelY = offsetY;
 
-      // Bar top edge y relative to container
-      const barTopY = barRect.top - containerRect.top;
+      label.style.left = `${labelX}px`;
+      label.style.top = `${labelY}px`;
 
-      // Calculate horizontal and vertical distance between points
-      const deltaX = labelCenterX - barX;
-      const deltaY = labelBottomY - barTopY;
+      const labelBottomCenterX = labelX + labelWidth / 2;
+      const labelBottomY = labelY + labelHeight;
 
-      // Calculate length and angle for line
-      const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const angleRad = Math.atan2(deltaY, deltaX);
-      const angleDeg = angleRad * (180 / Math.PI);
+      const deltaX = labelBottomCenterX - targetX;
+      const deltaY = labelBottomY - barTop;
+      const length = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+      const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
-      // Create line div
       const line = document.createElement('div');
       line.className = 'indicator-line';
-
-      // Position line at bar point
-      line.style.top = `${barTopY}px`;
-      line.style.left = `${barX}px`;
       line.style.width = `${length}px`;
-      line.style.transform = `rotate(${angleDeg}deg)`;
+      line.style.left = `${targetX}px`;
+      line.style.top = `${barTop}px`;
+      line.style.transform = `rotate(${angle}deg)`;
 
       labelsContainer.appendChild(line);
     }
