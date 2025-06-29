@@ -5,7 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fundraising Progress</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+  @font-face {
+    font-family: 'OtakiVegeBags';
+    src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
 
   body {
     font-family: sans-serif;
@@ -31,16 +36,17 @@
   .label-wrapper {
     position: absolute;
     bottom: 10px;
-    white-space: nowrap;
+    white-space: normal;  /* allow multiline */
+    text-align: center;
     z-index: 20;
     background: #fff;
     padding: 2px 6px;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    font-family: 'Permanent Marker', cursive;
-    font-size: 0.9375rem; /* 25% larger than 0.75rem */
+    font-size: 0.9375rem; /* 0.75rem * 1.25 = 0.9375rem */
     color: #000;
-    line-height: 1.1;
+    line-height: 1.2;
+    font-family: 'OtakiVegeBags', sans-serif; /* custom font */
   }
 
   svg {
@@ -95,6 +101,7 @@
     font-weight: bold;
     border-radius: 8px 0 0 8px;
     box-sizing: border-box;
+    font-size: 1.2rem;
   }
 
   .progress-text {
@@ -102,10 +109,10 @@
     font-size: 1rem;
     line-height: 1.4;
     word-wrap: break-word;
-    white-space: normal;  /* allow wrapping */
-    max-width: 100%;
     position: relative;
     z-index: 10;
+    max-width: 100%;
+    white-space: normal; /* allow wrapping */
   }
 
   @media (max-width: 500px) {
@@ -113,7 +120,7 @@
       height: 4em;
     }
     .label-wrapper {
-      font-size: 0.78rem; /* 25% larger of 0.625 */
+      font-size: 0.78rem; /* 0.625rem * 1.25 */
       padding: 1px 4px;
     }
   }
@@ -148,10 +155,10 @@
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     labelsContainer.appendChild(svg);
 
-    function createLabel(percent, text) {
+    function createLabel(percent, htmlText) {
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
-      wrapper.textContent = text;
+      wrapper.innerHTML = htmlText;
       wrapper.style.left = percent + '%';
       return wrapper;
     }
@@ -213,7 +220,6 @@
 
       const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
       const initCtrlYOffset = 12;
-      // Ensure control points stay above progress bar top (targetY)
       const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
 
       const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -230,7 +236,6 @@
 
       const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
       const finalCtrlYOffset = 12;
-      // Ensure control points stay above label bottom
       const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
 
       const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -247,11 +252,11 @@
         .then(res => res.json())
         .then(data => {
           const raised = data.total;
-          const percentInitial = Math.min(Math.round((raised / INITIAL_GOAL) * 100), 100);
-          const percentTotal = Math.min(Math.round((raised / FINAL_GOAL) * 100), 100);
+          const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+          const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
           barFill.style.width = percentTotal + '%';
-          barFill.textContent = percentInitial + '% of initial goal';
+          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
 
           const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
           barInitialBg.style.width = initialBgWidth + '%';
@@ -265,8 +270,8 @@
           labelsContainer.innerHTML = '';
           labelsContainer.appendChild(svg);
 
-          const initialLabel = createLabel(initialBgWidth, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
-          const finalLabel = createLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
+          const initialLabel = createLabel(initialBgWidth, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
+          const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
 
           labelsContainer.appendChild(initialLabel);
           labelsContainer.appendChild(finalLabel);
