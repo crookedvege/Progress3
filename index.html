@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fundraising Progress</title>
 <style>
+  @font-face {
+    font-family: 'OtakiVegeBagsSlim';
+    src: url('/netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
   body {
     font-family: sans-serif;
     margin: 0;
@@ -18,6 +25,7 @@
     overflow: visible;
   }
 
+  /* Container for labels and indicator lines */
   #labels-container {
     position: relative;
     height: 3.5em;
@@ -28,34 +36,26 @@
 
   .label-wrapper {
     position: absolute;
-    bottom: 10px;
+    bottom: 10px; /* distance above bar */
     white-space: nowrap;
     z-index: 20;
-    background: #fff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-family: 'OtakiVegeBagsSlim', sans-serif;
     font-size: 0.75rem;
     color: #000;
-    line-height: 1.1;
+    user-select: none;
+
+    /* Remove bubble */
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
 
-  svg {
+  .indicator-line {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    pointer-events: none;
-    overflow: visible;
+    width: 2px;
+    background: black;
     z-index: 15;
-  }
-
-  .indicator-path {
-    fill: none;
-    stroke: black;
-    stroke-width: 2;
-    stroke-linecap: round;
   }
 
   #bar-bg {
@@ -109,7 +109,7 @@
     }
     .label-wrapper {
       font-size: 0.65rem;
-      padding: 1px 4px;
+      padding: 0 !important;
     }
   }
 </style>
@@ -139,9 +139,9 @@
     const progressContainer = document.getElementById('progress-container');
     const barBg = document.getElementById('bar-bg');
 
-    // Create SVG once and reuse
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    labelsContainer.appendChild(svg);
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
 
     function createLabel(percent, text) {
       const wrapper = document.createElement('div');
@@ -149,10 +149,6 @@
       wrapper.textContent = text;
       wrapper.style.left = percent + '%';
       return wrapper;
-    }
-
-    function clamp(value, min, max) {
-      return Math.min(Math.max(value, min), max);
     }
 
     function adjustLabels(initialLabel, finalLabel) {
@@ -182,65 +178,92 @@
     }
 
     function drawIndicatorLines(initialLabel, finalLabel) {
-      svg.innerHTML = '';
+      const oldLines = labelsContainer.querySelectorAll('.indicator-line');
+      oldLines.forEach(line => line.remove());
 
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
 
-      const barTopY = barRect.top - containerRect.top;
-      const targetY = barTopY - 1; // 1px above bar top
+      // Constants for vertical offsets (px)
+      const LABEL_BOTTOM_MARGIN = 4; // margin below label baseline
+      const BAR_TOP_MARGIN = 1; // line ends 1px above progress bar top
 
-      const initialLabelRect = initialLabel.getBoundingClientRect();
-      const finalLabelRect = finalLabel.getBoundingClientRect();
+      // Initial goal line: convex "smiley" curve bending downward, not dipping into bar
+      {
+        const labelRect = initialLabel.getBoundingClientRect();
 
-      const initialLabelCenterX = initialLabelRect.left + initialLabelRect.width / 2 - containerRect.left;
-      const initialLabelBottomY = initialLabelRect.bottom - containerRect.top;
+        const percent = INITIAL_GOAL / FINAL_GOAL;
+        const markerX = percent * barRect.width + barRect.left - containerRect.left;
 
-      const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
-      const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
+        const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
+        const labelBottomY = labelRect.bottom - containerRect.top - LABEL_BOTTOM_MARGIN;
+        const barTopY = barRect.top - containerRect.top - BAR_TOP_MARGIN;
 
-      const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
-      const finalMarkerX = barRect.width + barRect.left - containerRect.left;
+        // Control point below line for convex curve
+        const controlX = (labelCenterX + markerX) / 2;
+        // Control point Y is slightly below the line connecting labelBottomY and barTopY,
+        // but must stay above progress bar top (barTopY)
+        // So controlY is set to barTopY + some offset but less than labelBottomY
+        const controlY = barTopY + Math.min(16, labelBottomY - barTopY - 4);
 
-      // Initial goal line: convex down curve (smiley) bending below straight line
-      // Control points placed below the line from label to marker but above progress bar
-      const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
-      const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
+        const path = `M${labelCenterX},${labelBottomY} Q${controlX},${controlY} ${markerX},${barTopY}`;
 
-      // Place control points about 12px BELOW the straight line connecting label bottom to marker (targetY)
-      // But keep at least 6px ABOVE progress bar top (targetY)
-      const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
-      const initCtrlYOffset = 12;
-      const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.style.position = 'absolute';
+        svg.style.left = '0';
+        svg.style.top = '0';
+        svg.style.width = containerRect.width + 'px';
+        svg.style.height = containerRect.height + 'px';
+        svg.style.overflow = 'visible';
+        svg.style.pointerEvents = 'none';
+        svg.classList.add('indicator-line');
 
-      const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      pathInit.setAttribute('class', 'indicator-path');
-      pathInit.setAttribute('d',
-        `M${initialLabelCenterX},${initialLabelBottomY} 
-         C${initCtrl1X},${initCtrlY} ${initCtrl2X},${initCtrlY} ${initialMarkerX},${targetY}`
-      );
-      svg.appendChild(pathInit);
+        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathEl.setAttribute('d', path);
+        pathEl.setAttribute('stroke', 'black');
+        pathEl.setAttribute('stroke-width', '2');
+        pathEl.setAttribute('fill', 'none');
 
-      // Final goal line: concave up curve (sad face) bending above straight line
-      // Control points placed above the line from label bottom to marker but well clear of label bottom
+        svg.appendChild(pathEl);
+        labelsContainer.appendChild(svg);
+      }
 
-      const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
-      const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
+      // Final goal line: concave "sad face" curve bending upward, not dipping into bar or label
+      {
+        const labelRect = finalLabel.getBoundingClientRect();
 
-      // We want control points to be ~12px above straight line between label bottom and targetY,
-      // but at least 6px above label bottom so it doesn't cross or overlap label
+        const percent = 1;
+        const markerX = percent * barRect.width + barRect.left - containerRect.left;
 
-      const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
-      const finalCtrlYOffset = 12;
-      const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
+        const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
+        const labelBottomY = labelRect.bottom - containerRect.top - LABEL_BOTTOM_MARGIN;
+        const barTopY = barRect.top - containerRect.top - BAR_TOP_MARGIN;
 
-      const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      pathFinal.setAttribute('class', 'indicator-path');
-      pathFinal.setAttribute('d',
-        `M${finalLabelCenterX},${finalLabelBottomY} 
-         C${finalCtrl1X},${finalCtrlY} ${finalCtrl2X},${finalCtrlY} ${finalMarkerX},${targetY}`
-      );
-      svg.appendChild(pathFinal);
+        // Control point above line for concave curve but below label bottom
+        const controlX = (labelCenterX + markerX) / 2;
+        const controlY = barTopY - 12;
+
+        const path = `M${labelCenterX},${labelBottomY} Q${controlX},${controlY} ${markerX},${barTopY}`;
+
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.style.position = 'absolute';
+        svg.style.left = '0';
+        svg.style.top = '0';
+        svg.style.width = containerRect.width + 'px';
+        svg.style.height = containerRect.height + 'px';
+        svg.style.overflow = 'visible';
+        svg.style.pointerEvents = 'none';
+        svg.classList.add('indicator-line');
+
+        const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathEl.setAttribute('d', path);
+        pathEl.setAttribute('stroke', 'black');
+        pathEl.setAttribute('stroke-width', '2');
+        pathEl.setAttribute('fill', 'none');
+
+        svg.appendChild(pathEl);
+        labelsContainer.appendChild(svg);
+      }
     }
 
     function update() {
@@ -264,7 +287,6 @@
           progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
           labelsContainer.innerHTML = '';
-          labelsContainer.appendChild(svg);
 
           const initialLabel = createLabel(initialBgWidth, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
           const finalLabel = createLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
@@ -284,6 +306,7 @@
     }
 
     window.addEventListener('resize', update);
+
     update();
   </script>
 </body>
