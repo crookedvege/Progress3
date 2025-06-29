@@ -1,57 +1,129 @@
-const fetch = require('node-fetch');
-
-exports.handler = async function(event, context) {
-  const API_KEY = process.env.AIRTABLE_API_KEY;
-  const BASE_ID = "appWPBQxrTk0Z2Knj";
-  const TABLE_NAME = "Progress";
-
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-      },
-    });
-
-    if (!response.ok) {
-      console.error("Airtable API error:", response.statusText);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Failed to fetch Airtable data" }),
-      };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Progress</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      color: #333;
     }
 
-    const json = await response.json();
-    const data = json.records[0]; // assuming first record is relevant
-
-    if (!data || !data.fields) {
-      console.error("Missing data or fields from Airtable response:", data);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Airtable data missing fields" }),
-      };
+    .bar-bg {
+      background: #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 20px;
+      position: relative;
+      width: 100%;
     }
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        progress: data.fields.Progress ?? null,
-        goal: data.fields.Goal ?? null,
-        total: data.fields["Donation Value Rollup (from Table 1)"] ?? null,
-        stretchGoal: 12000
-      }),
-    };
+    .bar-fill {
+      background: #f9ca24;
+      height: 100%;
+      width: 0%;
+      transition: width 0.6s ease;
+      position: relative;
+    }
 
-  } catch (err) {
-    console.error("Error in Netlify function:", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Server error" }),
-    };
+    .bar-text {
+      position: absolute;
+      right: 8px;
+      top: 1px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .summary {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="bar-bg">
+    <div class="bar-fill" id="bar-fill">
+      <div class="bar-text" id="bar-text">0%</div>
+    </div>
+  </div>
+  <div class="summary" id="summary">Loading...</div>
+
+  <script>
+  async function fetchProgress() {
+    try {
+      const response = await fetch('/.netlify/functions/getProgress');
+      const data = await response.json();
+      console.log("Fetched data:", data);
+
+      const { total, goal, stretchGoal } = data;
+
+      const barFill = document.getElementById('bar-fill');
+      const barText = document.getElementById('bar-text');
+      const summary = document.getElementById('summary');
+
+      const percentOfStretch = Math.min((total / stretchGoal) * 100, 100);
+      const percentOfMain = Math.min((total / goal) * 100, 100);
+
+      // Update the bar fill width
+      barFill.style.width = `${percentOfStretch}%`;
+
+      // Update the label text
+      if (total >= goal) {
+        barText.textContent = `${percentOfStretch.toFixed(1)}%`;
+        summary.textContent = `${percentOfStretch.toFixed(1)}% of stretch goal raised!`;
+      } else {
+        const remaining = Math.max(stretchGoal - total, 0);
+        barText.textContent = `${percentOfMain.toFixed(1)}%`;
+        summary.textContent = `${percentOfMain.toFixed(1)}% of main goal — $${remaining.toLocaleString()} from unlocking the stretch goal!`;
+      }
+
+      // Add visual goal markers
+      const barBg = document.querySelector('.bar-bg');
+      const markerContainer = document.createElement('div');
+      markerContainer.style.position = 'absolute';
+      markerContainer.style.top = 0;
+      markerContainer.style.left = 0;
+      markerContainer.style.height = '100%';
+      markerContainer.style.width = '100%';
+
+      const addMarker = (leftPercent, label) => {
+        const marker = document.createElement('div');
+        marker.style.position = 'absolute';
+        marker.style.left = `${leftPercent}%`;
+        marker.style.top = 0;
+        marker.style.bottom = 0;
+        marker.style.width = '2px';
+        marker.style.background = '#000';
+
+        const tag = document.createElement('div');
+        tag.textContent = label;
+        tag.style.position = 'absolute';
+        tag.style.top = '-1.5em';
+        tag.style.left = '50%';
+        tag.style.transform = 'translateX(-50%)';
+        tag.style.fontSize = '0.75rem';
+
+        marker.appendChild(tag);
+        markerContainer.appendChild(marker);
+      };
+
+      addMarker((goal / stretchGoal) * 100, 'Main Goal');
+      addMarker(100, 'Stretch Goal');
+
+      barBg.appendChild(markerContainer);
+    } catch (error) {
+      console.error("Error fetching progress:", error);
+    }
   }
-};
+
+  fetchProgress();
+</script>
+
+</body>
+</html>
