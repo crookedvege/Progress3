@@ -30,7 +30,7 @@
       left: 0;
       top: 0;
       height: 100%;
-      background-color: #fff9c4;
+      background-color: #fff9c4; /* light yellow */
       z-index: 1;
     }
 
@@ -53,8 +53,8 @@
 
     .marker {
       position: absolute;
-      top: 0;
-      height: 100%;
+      top: -1.5em; /* extend above the bar to the label height */
+      height: calc(100% + 1.5em); /* bar height plus label height */
       width: 2px;
       background: #000;
       z-index: 3;
@@ -63,19 +63,18 @@
     .goal-label {
       position: absolute;
       top: -1.5em;
-      transform: translateX(-50%);
       font-size: 0.75rem;
       color: #000;
       white-space: nowrap;
       z-index: 3;
       pointer-events: none;
+      text-align: right;
+      /* Right-align text so it ends at the bar line */
     }
 
-    .goal-label.final {
+    .goal-label.final,
+    .goal-label.initial {
       transform: translateX(-100%);
-      text-align: right;
-      max-width: 150px;
-      white-space: nowrap;
     }
 
     .progress-text {
@@ -140,7 +139,12 @@
       label.className = 'goal-label';
       label.textContent = labelText;
       label.style.left = `${percent}%`;
-      if (isFinal) label.classList.add('final');
+
+      if (isFinal) {
+        label.classList.add('final');
+      } else {
+        label.classList.add('initial');
+      }
 
       barBg.appendChild(marker);
       barBg.appendChild(label);
