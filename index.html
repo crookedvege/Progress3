@@ -181,46 +181,79 @@
       finalLabel.style.left = (finalLeft / containerRect.width) * 100 + '%';
     }
 
+    function randomWiggle(amplitude, frequency, phase, t) {
+      return amplitude * Math.sin(frequency * t + phase);
+    }
+
     function drawIndicatorLines(initialLabel, finalLabel) {
       svg.innerHTML = '';
 
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
 
-      [initialLabel, finalLabel].forEach((label) => {
-        const labelRect = label.getBoundingClientRect();
+      // Common target Y: 1px above bar top
+      const barTopY = barRect.top - containerRect.top;
+      const targetY = barTopY - 1;
 
-        const percent = (label === initialLabel) ? INITIAL_GOAL / FINAL_GOAL : 1;
-        const markerX = percent * barRect.width + barRect.left - containerRect.left;
+      // Helper function to build cubic Bezier curve string
+      // Points: M start, C ctrl1, ctrl2, end
+      function buildCurve(startX, startY, ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, endX, endY) {
+        return `M ${startX},${startY} C ${ctrl1X},${ctrl1Y} ${ctrl2X},${ctrl2Y} ${endX},${endY}`;
+      }
 
-        const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
-        const labelBottomY = labelRect.bottom - containerRect.top;
+      // Calculate positions for each label
+      const initialLabelRect = initialLabel.getBoundingClientRect();
+      const finalLabelRect = finalLabel.getBoundingClientRect();
 
-        const barTopY = barRect.top - containerRect.top;
-        const targetY = barTopY - 1; // 1px above bar
+      const initialLabelCenterX = initialLabelRect.left + initialLabelRect.width / 2 - containerRect.left;
+      const initialLabelBottomY = initialLabelRect.bottom - containerRect.top;
 
-        // Control Y offset for curves — always ABOVE both label bottom and targetY
-        const controlYOffset = 20;
+      const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
+      const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
 
-        // Calculate control Y for both lines well ABOVE
-        // Both curves bend *upward*, just different heights
-        let controlY;
-        if (label === initialLabel) {
-          // initial goal: moderate curve
-          controlY = Math.min(labelBottomY, targetY) - controlYOffset;
-        } else {
-          // final goal: higher curve to avoid overlap
-          controlY = Math.min(labelBottomY, targetY) - controlYOffset * 1.5;
-        }
+      // Marker X positions on the bar
+      const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
+      const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-        // Control X is midpoint + subtle random horizontal wiggle
-        const controlX = (labelCenterX + markerX) / 2 + (Math.random() - 0.5) * 6;
+      // === Initial goal line (convex) — curve bends downward but stops above bar ===
+      // Control points placed to create a downward convex curve that stays above bar
+      const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
+      const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
 
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M ${labelCenterX},${labelBottomY} Q ${controlX},${controlY} ${markerX},${targetY}`);
-        path.setAttribute('class', 'indicator-path');
-        svg.appendChild(path);
-      });
+      // For vertical control points, place them slightly *below* the start label bottom Y but
+      // at least 8px above the targetY to avoid dipping into the bar
+      const minCtrlY = targetY + 8;
+      const initCtrl1Y = Math.min(initialLabelBottomY + 20 + randomWiggle(8, 0.5, 0, 0), minCtrlY);
+      const initCtrl2Y = Math.min(initialLabelBottomY + 20 + randomWiggle(8, 0.5, Math.PI / 2, 0), minCtrlY);
+
+      const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathInit.setAttribute('class', 'indicator-path');
+      pathInit.setAttribute('d', buildCurve(
+        initialLabelCenterX, initialLabelBottomY,
+        initCtrl1X, initCtrl1Y,
+        initCtrl2X, initCtrl2Y,
+        initialMarkerX, targetY
+      ));
+      svg.appendChild(pathInit);
+
+      // === Final goal line (concave) — curve bends upward ===
+      // Control points placed to create upward curve with wiggle
+      const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
+      const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
+
+      const maxCtrlY = Math.min(finalLabelBottomY, targetY) - 40;
+      const finalCtrl1Y = maxCtrlY + randomWiggle(8, 0.5, 0, 0);
+      const finalCtrl2Y = maxCtrlY + randomWiggle(8, 0.5, Math.PI / 2, 0);
+
+      const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathFinal.setAttribute('class', 'indicator-path');
+      pathFinal.setAttribute('d', buildCurve(
+        finalLabelCenterX, finalLabelBottomY,
+        finalCtrl1X, finalCtrl1Y,
+        finalCtrl2X, finalCtrl2Y,
+        finalMarkerX, targetY
+      ));
+      svg.appendChild(pathFinal);
     }
 
     function update() {
