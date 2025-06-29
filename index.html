@@ -20,17 +20,18 @@
 
     .label-row {
       position: relative;
-      height: 3.5em; /* increased for spacing */
-      margin-bottom: 0.5em; /* space between labels and bar */
+      height: 3.5em; /* vertical space for labels and lines */
+      margin-bottom: 0.5em; /* space between labels/lines and bar */
     }
 
     .label-wrapper {
       position: absolute;
-      bottom: 30px; /* move labels 30px above bar */
+      bottom: 15px; /* reduced vertical space to half */
       white-space: nowrap;
       transform: translateX(-50%);
       transition: left 0.3s ease;
       user-select: none;
+      z-index: 5;
     }
 
     .goal-label {
@@ -41,13 +42,15 @@
       border-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       line-height: 1.1;
+      position: relative;
+      z-index: 5;
     }
 
     .indicator-line {
       position: absolute;
       width: 2px;
       background: #000;
-      /* height and left will be set dynamically */
+      z-index: 1;
     }
 
     @media (max-width: 500px) {
@@ -66,6 +69,7 @@
       border-radius: 8px;
       height: 24px;
       overflow: hidden;
+      z-index: 2;
     }
 
     .bar-initial-bg {
@@ -168,7 +172,7 @@
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
       wrapper.style.left = `${percent}%`;
-      wrapper.style.bottom = '30px'; // same as CSS for vertical position
+      wrapper.style.bottom = '15px'; // updated vertical space
 
       const label = document.createElement('div');
       label.className = 'goal-label';
@@ -239,9 +243,9 @@
     }
 
     function updateIndicatorLines(initialWrapper, finalWrapper) {
-      // Remove old lines if any
-      const oldLines = labelRow.querySelectorAll('.indicator-line');
-      oldLines.forEach(line => line.remove());
+      // Clear existing lines first
+      const existingLines = labelRow.querySelectorAll('.indicator-line');
+      existingLines.forEach(line => line.remove());
 
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
@@ -250,36 +254,34 @@
         const label = wrapper.querySelector('.goal-label');
         const labelRect = label.getBoundingClientRect();
 
-        // Calculate center bottom point of label relative to container
+        // Center bottom of label relative to container
         const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
         const labelBottomY = labelRect.bottom - containerRect.top;
 
-        // Calculate top center of bar at corresponding x position
-        // We get the percent from wrapper's left relative to container, then calc bar x
+        // Calculate marker position on bar relative to container left
         const wrapperLeftPercent = parseFloat(wrapper.style.left);
         const barX = (wrapperLeftPercent / 100) * barRect.width;
 
-        // bar top relative to container
+        // Bar top relative to container
         const barTopY = barRect.top - containerRect.top;
 
         // Create line div
         const line = document.createElement('div');
         line.className = 'indicator-line';
 
-        // Calculate height and position
+        // Calculate height of vertical line from bar top to label bottom
         const lineHeight = labelBottomY - barTopY;
+
         line.style.height = `${lineHeight}px`;
 
-        // Place line horizontally at label center x (align with label bottom center)
+        // Position line so its center aligns with label center
         line.style.left = `${labelCenterX}px`;
-        // Place line vertically from bar top to label bottom (line's top at barTopY)
         line.style.top = `${barTopY}px`;
 
         labelRow.appendChild(line);
       });
     }
 
-    // Update label positions and indicator lines on window resize
     window.addEventListener('resize', () => {
       const wrappers = labelRow.querySelectorAll('.label-wrapper');
       if (wrappers.length === 2) {
