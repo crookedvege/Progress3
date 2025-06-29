@@ -13,7 +13,7 @@
   }
 
   body {
-    font-family: 'OtakiVegeBags', sans-serif;
+    font-family: sans-serif;
     margin: 0;
     padding: 2em;
   }
@@ -38,11 +38,11 @@
     bottom: 10px;
     white-space: nowrap;
     z-index: 20;
+    font-family: 'OtakiVegeBags', sans-serif;
     /* Removed bubble background and padding */
     font-size: 0.75rem;
     color: #000;
     line-height: 1.1;
-    font-family: 'OtakiVegeBags', sans-serif;
   }
 
   svg {
@@ -97,7 +97,7 @@
     font-weight: bold;
     border-radius: 8px 0 0 8px;
     box-sizing: border-box;
-    font-family: 'OtakiVegeBags', sans-serif;
+    font-family: sans-serif; /* keep default */
   }
 
   .progress-text {
@@ -107,7 +107,7 @@
     word-wrap: break-word;
     position: relative;
     z-index: 10;
-    font-family: 'OtakiVegeBags', sans-serif;
+    font-family: sans-serif; /* keep default */
   }
 
   @media (max-width: 500px) {
@@ -145,7 +145,6 @@
     const progressContainer = document.getElementById('progress-container');
     const barBg = document.getElementById('bar-bg');
 
-    // Create SVG once and reuse
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     labelsContainer.appendChild(svg);
 
@@ -194,7 +193,7 @@
       const barRect = barBg.getBoundingClientRect();
 
       const barTopY = barRect.top - containerRect.top;
-      const targetY = barTopY - 1; // 1px above bar top
+      const targetY = barTopY - 1;
 
       const initialLabelRect = initialLabel.getBoundingClientRect();
       const finalLabelRect = finalLabel.getBoundingClientRect();
@@ -208,12 +207,10 @@
       const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
       const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-      // Initial goal line: convex down curve (smiley) bending below straight line
+      // Initial goal line: convex down (smiley)
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
 
-      // Control points about 12px BELOW the straight line connecting label bottom to marker (targetY)
-      // But keep at least 6px ABOVE progress bar top (targetY)
       const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
       const initCtrlYOffset = 12;
       const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
@@ -226,7 +223,7 @@
       );
       svg.appendChild(pathInit);
 
-      // Final goal line: concave up curve (sad face) bending above straight line
+      // Final goal line: concave up (sad face)
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
 
@@ -272,10 +269,7 @@
           labelsContainer.appendChild(initialLabel);
           labelsContainer.appendChild(finalLabel);
 
-          // Adjust label positions for no overlap and clamping
           adjustLabels(initialLabel, finalLabel);
-
-          // Draw curved indicator lines
           drawIndicatorLines(initialLabel, finalLabel);
         })
         .catch(() => {
@@ -290,7 +284,6 @@
     window.addEventListener('resize', update);
 
     update();
-    // Optionally refresh every 10 seconds or so
     setInterval(update, 10000);
   </script>
 </body>
