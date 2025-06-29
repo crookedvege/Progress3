@@ -139,15 +139,14 @@
         progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
         progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        // Clear previous labels
         labelRow.innerHTML = '';
 
-        // Add labels and store for adjustment
         const initialLabel = addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
         const finalLabel = addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`);
 
-        // After they render, adjust to prevent overlap and keep final label inside container
-        window.requestAnimationFrame(() => adjustLabels(initialLabel, finalLabel));
+        setTimeout(() => {
+          fixLabelPositions(initialLabel, finalLabel);
+        }, 100);
       })
       .catch(err => {
         console.error(err);
@@ -172,52 +171,83 @@
       return wrapper;
     }
 
-    function adjustLabels(labelA, labelB) {
+    function fixLabelPositions(initialWrapper, finalWrapper) {
       const containerRect = progressContainer.getBoundingClientRect();
-      const aRect = labelA.getBoundingClientRect();
-      const bRect = labelB.getBoundingClientRect();
 
-      // Compute desired center positions relative to container left
-      let aCenter = aRect.left + aRect.width / 2 - containerRect.left;
-      let bCenter = bRect.left + bRect.width / 2 - containerRect.left;
+      const initialLabel = initialWrapper.querySelector('.goal-label');
+      const finalLabel = finalWrapper.querySelector('.goal-label');
 
-      // Minimum horizontal spacing between labels (pixels)
-      const minSpacing = 8;
+      const initialRect = initialLabel.getBoundingClientRect();
+      const finalRect = finalLabel.getBoundingClientRect();
 
-      // Check overlap and adjust
-      if (bCenter - aCenter < (aRect.width / 2 + bRect.width / 2 + minSpacing)) {
-        // Overlap, so shift labels apart
-        const overlap = (aRect.width / 2 + bRect.width / 2 + minSpacing) - (bCenter - aCenter);
+      // Compute marker x positions relative to container left (in px)
+      const initialMarkerX = containerRect.left + (INITIAL_GOAL / FINAL_GOAL) * containerRect.width;
+      const finalMarkerX = containerRect.left + containerRect.width;
 
-        // Try shifting initial label left and final label right
-        let newALeft = aCenter - overlap / 2;
-        let newBLeft = bCenter + overlap / 2;
+      // Widths
+      const initialWidth = initialRect.width;
+      const finalWidth = finalRect.width;
 
-        // Clamp newALeft not to go less than 0 (start of container)
-        newALeft = Math.max(newALeft, aRect.width / 2);
+      // Minimum gap between labels in px
+      const minGap = 8;
 
-        // Clamp newBLeft not to go beyond container width - half label width
-        newBLeft = Math.min(newBLeft, containerRect.width - bRect.width / 2);
+      // Start by positioning labels centered at markerX (in px)
+      let initialLeftPx = initialMarkerX - containerRect.left; // relative to container left edge
+      let finalLeftPx = finalMarkerX - containerRect.left;
 
-        // Set new left % for labels relative to container width
-        const newAPercent = (newALeft / containerRect.width) * 100;
-        const newBPercent = (newBLeft / containerRect.width) * 100;
+      // Attempt centered positions (transform: translateX(-50%) handles centering)
+      // We want to ensure:
+      // 1) labels don't overflow container edges
+      // 2) labels do not overlap (minGap apart)
 
-        labelA.style.left = `${newAPercent}%`;
-        labelB.style.left = `${newBPercent}%`;
-      } else {
-        // No overlap, ensure labels exactly at goal percent positions
-        const initialPercent = (INITIAL_GOAL / FINAL_GOAL) * 100;
-        labelA.style.left = `${initialPercent}%`;
-        labelB.style.left = `100%`;
+      // Compute left edge and right edge of labels if centered:
+      let initialLabelLeftEdge = initialLeftPx - initialWidth / 2;
+      let initialLabelRightEdge = initialLeftPx + initialWidth / 2;
+      let finalLabelLeftEdge = finalLeftPx - finalWidth / 2;
+      let finalLabelRightEdge = finalLeftPx + finalWidth / 2;
+
+      // Clamp to container edges:
+      if (initialLabelLeftEdge < 0) {
+        // shift initial label right so left edge is 0
+        initialLeftPx += -initialLabelLeftEdge;
       }
+      if (finalLabelRightEdge > containerRect.width) {
+        // shift final label left so right edge is container width
+        finalLeftPx -= (finalLabelRightEdge - containerRect.width);
+      }
+
+      // Recalculate edges after clamping
+      initialLabelLeftEdge = initialLeftPx - initialWidth / 2;
+      initialLabelRightEdge = initialLeftPx + initialWidth / 2;
+      finalLabelLeftEdge = finalLeftPx - finalWidth / 2;
+      finalLabelRightEdge = finalLeftPx + finalWidth / 2;
+
+      // Check for overlap, if so push initial label left and final label right
+      if (initialLabelRightEdge + minGap > finalLabelLeftEdge) {
+        // Calculate overlap amount
+        const overlap = (initialLabelRightEdge + minGap) - finalLabelLeftEdge;
+
+        // Shift initial label left by half overlap, but not beyond left edge
+        initialLeftPx = Math.max(initialLeftPx - overlap / 2, initialWidth / 2);
+
+        // Shift final label right by half overlap, but not beyond container right edge
+        finalLeftPx = Math.min(finalLeftPx + overlap / 2, containerRect.width - finalWidth / 2);
+      }
+
+      // Apply final positions in percent relative to container width
+      const initialPercent = (initialLeftPx / containerRect.width) * 100;
+      const finalPercent = (finalLeftPx / containerRect.width) * 100;
+
+      initialWrapper.style.left = `${initialPercent}%`;
+      finalWrapper.style.left = `${finalPercent}%`;
     }
 
-    // Recalculate on window resize (to keep labels from overlapping on responsive changes)
     window.addEventListener('resize', () => {
       const labelWrappers = labelRow.querySelectorAll('.label-wrapper');
       if (labelWrappers.length === 2) {
-        adjustLabels(labelWrappers[0], labelWrappers[1]);
+        setTimeout(() => {
+          fixLabelPositions(labelWrappers[0], labelWrappers[1]);
+        }, 100);
       }
     });
   </script>
