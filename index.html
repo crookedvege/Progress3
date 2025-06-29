@@ -69,7 +69,7 @@
       z-index: 3;
       pointer-events: none;
       text-align: right;
-      padding-right: 4px; /* added padding so label text doesn't touch the marker */
+      padding-right: 4px; /* space so label text doesn't touch the marker */
     }
 
     .goal-label.final,
@@ -80,6 +80,8 @@
     .progress-text {
       margin-top: 0.5em;
       font-size: 1rem;
+      line-height: 1.3;
+      white-space: pre-line; /* allow multiline text */
     }
   </style>
 </head>
@@ -116,10 +118,15 @@
         const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
         barInitialBg.style.width = `${initialBgWidth}%`;
 
-        progressText.textContent = `$${raised.toLocaleString()} raised of initial $${INITIAL_GOAL.toLocaleString()} goal!`;
+        const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
+        const remainingFinal = Math.max(0, FINAL_GOAL - raised);
 
-        const remaining = Math.max(0, FINAL_GOAL - raised);
-        stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
+        progressText.textContent = `$${raised.toLocaleString()} raised!\n` +
+          `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, ` +
+          `and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+
+        // We'll clear stretchText since all info is in progressText now
+        stretchText.textContent = '';
 
         addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
         addMarker(100, `final goal $${FINAL_GOAL.toLocaleString()}`, true);
@@ -128,6 +135,7 @@
         console.error(err);
         barFill.textContent = 'Error loading';
         progressText.textContent = '';
+        stretchText.textContent = '';
       });
 
     function addMarker(percent, labelText, isFinal = false) {
