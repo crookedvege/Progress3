@@ -1,3 +1,5 @@
+this is the version I liked
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,13 +7,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fundraising Progress</title>
 <style>
-  @font-face {
-    font-family: 'OtakiVegeBags';
-    src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-  }
-
   body {
     font-family: sans-serif;
     margin: 0;
@@ -25,7 +20,6 @@
     overflow: visible;
   }
 
-  /* Container for labels and indicator lines */
   #labels-container {
     position: relative;
     height: 3.5em;
@@ -36,25 +30,34 @@
 
   .label-wrapper {
     position: absolute;
-    bottom: 10px; /* distance above bar */
+    bottom: 10px;
     white-space: nowrap;
     z-index: 20;
-    background: transparent; /* removed bubble background */
-    padding: 0;             /* removed padding */
-    border-radius: 0;       /* removed border radius */
-    box-shadow: none;       /* removed shadow */
-
-    font-family: 'OtakiVegeBags', sans-serif;
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     font-size: 0.75rem;
     color: #000;
     line-height: 1.1;
   }
 
-  .indicator-line {
+  svg {
     position: absolute;
-    width: 2px;
-    background: black;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    pointer-events: none;
+    overflow: visible;
     z-index: 15;
+  }
+
+  .indicator-path {
+    fill: none;
+    stroke: black;
+    stroke-width: 2;
+    stroke-linecap: round;
   }
 
   #bar-bg {
@@ -138,6 +141,10 @@
     const progressContainer = document.getElementById('progress-container');
     const barBg = document.getElementById('bar-bg');
 
+    // Create SVG once and reuse
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    labelsContainer.appendChild(svg);
+
     function createLabel(percent, text) {
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
@@ -177,115 +184,65 @@
     }
 
     function drawIndicatorLines(initialLabel, finalLabel) {
-      const oldLines = labelsContainer.querySelectorAll('.indicator-line');
-      oldLines.forEach(line => line.remove());
+      svg.innerHTML = '';
 
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
 
-      // Initial goal line: convex like a smile (∪), ending 1px above bar top
-      {
-        const labelRect = initialLabel.getBoundingClientRect();
+      const barTopY = barRect.top - containerRect.top;
+      const targetY = barTopY - 1; // 1px above bar top
 
-        const percent = INITIAL_GOAL / FINAL_GOAL;
-        const markerX = percent * barRect.width + barRect.left - containerRect.left;
+      const initialLabelRect = initialLabel.getBoundingClientRect();
+      const finalLabelRect = finalLabel.getBoundingClientRect();
 
-        const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
-        const labelBottomY = labelRect.bottom - containerRect.top;
-        const barTopY = barRect.top - containerRect.top;
+      const initialLabelCenterX = initialLabelRect.left + initialLabelRect.width / 2 - containerRect.left;
+      const initialLabelBottomY = initialLabelRect.bottom - containerRect.top;
 
-        // Control points for bezier curve - convex (smiley)
-        const startX = labelCenterX;
-        const startY = labelBottomY;
+      const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
+      const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
 
-        const endX = markerX;
-        const endY = barTopY - 1; // 1px above bar
+      const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
+      const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-        // Control points positioned below the straight line to create convex curve
-        const cp1X = startX + (endX - startX) / 3;
-        const cp1Y = startY + 30; // 30px below start point
+      // Initial goal line: convex down curve (smiley) bending below straight line
+      // Control points placed below the line from label to marker but above progress bar
+      const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
+      const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
 
-        const cp2X = startX + 2 * (endX - startX) / 3;
-        const cp2Y = endY + 30; // 30px below end point
+      // Place control points about 12px BELOW the straight line connecting label bottom to marker (targetY)
+      // But keep at least 6px ABOVE progress bar top (targetY)
+      const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
+      const initCtrlYOffset = 12;
+      const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
 
-        drawBezierLine(startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY);
-      }
+      const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathInit.setAttribute('class', 'indicator-path');
+      pathInit.setAttribute('d',
+        `M${initialLabelCenterX},${initialLabelBottomY} 
+         C${initCtrl1X},${initCtrlY} ${initCtrl2X},${initCtrlY} ${initialMarkerX},${targetY}`
+      );
+      svg.appendChild(pathInit);
 
-      // Final goal line: concave like a frown (∩), ending 1px above bar top
-      {
-        const labelRect = finalLabel.getBoundingClientRect();
+      // Final goal line: concave up curve (sad face) bending above straight line
+      // Control points placed above the line from label bottom to marker but well clear of label bottom
 
-        const percent = 1;
-        const markerX = percent * barRect.width + barRect.left - containerRect.left;
+      const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
+      const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
 
-        const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
-        const labelBottomY = labelRect.bottom - containerRect.top;
-        const barTopY = barRect.top - containerRect.top;
+      // We want control points to be ~12px above straight line between label bottom and targetY,
+      // but at least 6px above label bottom so it doesn't cross or overlap label
 
-        // Control points for bezier curve - concave (frown)
-        const startX = labelCenterX;
-        const startY = labelBottomY;
+      const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
+      const finalCtrlYOffset = 12;
+      const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
 
-        const endX = markerX;
-        const endY = barTopY - 1; // 1px above bar
-
-        // Control points positioned above the straight line to create concave curve
-        const cp1X = startX + (endX - startX) / 3;
-        const cp1Y = startY - 30; // 30px above start point
-
-        const cp2X = startX + 2 * (endX - startX) / 3;
-        const cp2Y = endY - 30; // 30px above end point
-
-        drawBezierLine(startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY);
-      }
-
-      // Helper function to draw cubic Bezier curve as a div with rotation and scaling
-      function drawBezierLine(x0, y0, x1, y1, x2, y2, x3, y3) {
-        // Approximate Bezier length by sampling points
-        function bezier(t) {
-          const cx = 3 * (x1 - x0);
-          const bx = 3 * (x2 - x1) - cx;
-          const ax = x3 - x0 - cx - bx;
-
-          const cy = 3 * (y1 - y0);
-          const by = 3 * (y2 - y1) - cy;
-          const ay = y3 - y0 - cy - by;
-
-          const tCubed = t * t * t;
-          const tSquared = t * t;
-
-          const x = ax * tCubed + bx * tSquared + cx * t + x0;
-          const y = ay * tCubed + by * tSquared + cy * t + y0;
-
-          return { x, y };
-        }
-
-        const segments = 30;
-        const points = [];
-        for (let i = 0; i <= segments; i++) {
-          points.push(bezier(i / segments));
-        }
-
-        for (let i = 0; i < segments; i++) {
-          const p0 = points[i];
-          const p1 = points[i + 1];
-          const dx = p1.x - p0.x;
-          const dy = p1.y - p0.y;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-
-          const line = document.createElement('div');
-          line.className = 'indicator-line';
-          line.style.width = length + 'px';
-          line.style.height = '2px';
-          line.style.left = p0.x + 'px';
-          line.style.top = p0.y + 'px';
-          line.style.transformOrigin = '0 0';
-          line.style.transform = `rotate(${angle}deg)`;
-
-          labelsContainer.appendChild(line);
-        }
-      }
+      const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathFinal.setAttribute('class', 'indicator-path');
+      pathFinal.setAttribute('d',
+        `M${finalLabelCenterX},${finalLabelBottomY} 
+         C${finalCtrl1X},${finalCtrlY} ${finalCtrl2X},${finalCtrlY} ${finalMarkerX},${targetY}`
+      );
+      svg.appendChild(pathFinal);
     }
 
     function update() {
@@ -309,6 +266,7 @@
           progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
           labelsContainer.innerHTML = '';
+          labelsContainer.appendChild(svg);
 
           const initialLabel = createLabel(initialBgWidth, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
           const finalLabel = createLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
@@ -328,7 +286,6 @@
     }
 
     window.addEventListener('resize', update);
-
     update();
   </script>
 </body>
