@@ -1,6 +1,4 @@
-const fetch = require('node-fetch');
-
-exports.handler = async function(event, context) {
+exports.handler = async function (event, context) {
   const API_KEY = process.env.AIRTABLE_API_KEY;
   const BASE_ID = "appWPBQxrTk0Z2Knj";
   const TABLE_NAME = "Progress";
@@ -15,18 +13,16 @@ exports.handler = async function(event, context) {
     });
 
     if (!response.ok) {
-      console.error("Airtable API error:", response.statusText);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Failed to fetch Airtable data" }),
+        body: JSON.stringify({ error: `Airtable API error: ${response.statusText}` }),
       };
     }
 
     const json = await response.json();
-    const data = json.records[0]; // assuming first record is relevant
+    const data = json.records[0];
 
     if (!data || !data.fields) {
-      console.error("Missing data or fields from Airtable response:", data);
       return {
         statusCode: 500,
         body: JSON.stringify({ error: "Airtable data missing fields" }),
@@ -46,9 +42,8 @@ exports.handler = async function(event, context) {
         stretchGoal: 12000
       }),
     };
-
   } catch (err) {
-    console.error("Error in Netlify function:", err);
+    console.error("Server error:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Server error" }),
