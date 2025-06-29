@@ -145,8 +145,8 @@
         labelsContainer.appendChild(initialLabel);
         labelsContainer.appendChild(finalLabel);
 
-        // Position labels and draw lines
-        positionLabelsAndDrawLines(initialLabel, finalLabel);
+        // Position labels
+        positionLabels(initialLabel, finalLabel);
       })
       .catch(err => {
         console.error(err);
@@ -154,56 +154,32 @@
         progressText.textContent = '';
       });
 
-    function positionLabelsAndDrawLines(initialLabel, finalLabel) {
+    function positionLabels(initialLabel, finalLabel) {
       requestAnimationFrame(() => {
         const containerRect = progressContainer.getBoundingClientRect();
         const barRect = barBg.getBoundingClientRect();
 
-        const labelOffsetY = 0; // keep labels close to the bar
-
-        // Get positions for bar points
         const barLeft = barRect.left - containerRect.left;
         const barWidth = barRect.width;
-        const barTop = barRect.top - containerRect.top;
 
         const initialX = barLeft + (INITIAL_GOAL / FINAL_GOAL) * barWidth;
         const finalX = barLeft + barWidth;
 
-        // Place labels
-        placeLabelWithLine(initialLabel, initialX, labelOffsetY, barTop);
-        placeLabelWithLine(finalLabel, finalX, labelOffsetY, barTop);
+        const minGap = 100;
+        let initialLabelX = Math.max(0, initialX - initialLabel.offsetWidth / 2);
+        let finalLabelX = Math.max(0, finalX - finalLabel.offsetWidth / 2);
+
+        if (finalLabelX - initialLabelX < minGap) {
+          const midpoint = (initialLabelX + finalLabelX) / 2;
+          initialLabelX = midpoint - minGap / 2;
+          finalLabelX = midpoint + minGap / 2;
+        }
+
+        initialLabel.style.left = `${initialLabelX}px`;
+        finalLabel.style.left = `${finalLabelX}px`;
+        initialLabel.style.top = `0px`;
+        finalLabel.style.top = `0px`;
       });
-    }
-
-    function placeLabelWithLine(label, targetX, offsetY, barTop) {
-      const labelsContainer = document.getElementById('labels-container');
-      const containerRect = progressContainer.getBoundingClientRect();
-
-      const labelWidth = label.offsetWidth;
-      const labelHeight = label.offsetHeight;
-
-      const labelX = Math.max(0, targetX - labelWidth / 2);
-      const labelY = offsetY;
-
-      label.style.left = `${labelX}px`;
-      label.style.top = `${labelY}px`;
-
-      const labelBottomCenterX = labelX + labelWidth / 2;
-      const labelBottomY = labelY + labelHeight;
-
-      const deltaX = labelBottomCenterX - targetX;
-      const deltaY = labelBottomY - barTop;
-      const length = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-      const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-
-      const line = document.createElement('div');
-      line.className = 'indicator-line';
-      line.style.width = `${length}px`;
-      line.style.left = `${targetX}px`;
-      line.style.top = `${barTop}px`;
-      line.style.transform = `rotate(${angle}deg)`;
-
-      labelsContainer.appendChild(line);
     }
   </script>
 </body>
