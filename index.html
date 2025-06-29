@@ -185,7 +185,7 @@
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
 
-      [initialLabel, finalLabel].forEach((label, i) => {
+      [initialLabel, finalLabel].forEach((label) => {
         const labelRect = label.getBoundingClientRect();
 
         const percent = (label === initialLabel) ? INITIAL_GOAL / FINAL_GOAL : 1;
@@ -195,11 +195,13 @@
         const labelBottomY = labelRect.bottom - containerRect.top;
 
         const barTopY = barRect.top - containerRect.top;
-        const targetY = barTopY - 8; // Finish line 8px above the bar
+        const targetY = barTopY - 1; // 1px above the bar
 
+        // For initial goal line: curve bends UP (concave up) => control point BELOW line points
+        // For final goal line: curve bends DOWN (concave down) => control point ABOVE line points
         const controlY = (label === initialLabel)
-          ? labelBottomY - 30  // Curve upward for initial
-          : labelBottomY + 30; // Curve downward for final
+          ? Math.max(labelBottomY, targetY) + 30 // 30px below for upward curve
+          : Math.min(labelBottomY, targetY) - 30; // 30px above for downward curve
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', `M ${labelCenterX},${labelBottomY} Q ${(labelCenterX + markerX) / 2},${controlY} ${markerX},${targetY}`);
