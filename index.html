@@ -199,15 +199,27 @@
         const barTopY = barRect.top - containerRect.top;
         const targetY = barTopY - 1; // 1px above bar
 
+        // Control Y offset for curves
         const controlYOffset = 10;
 
-        // Control Y position bends opposite ways for initial vs final
-        const controlY = (label === initialLabel)
-          ? Math.max(labelBottomY, targetY) + controlYOffset  // curve "down" for initial
-          : Math.min(labelBottomY, targetY) - controlYOffset; // curve "up" for final
+        // Random subtle wiggle offsets
+        const randomXOffset = (Math.random() - 0.5) * 6; 
+        const randomYOffset = (Math.random() - 0.5) * 4;
+
+        // For initial goal: curve UP above labels (away from bar)
+        // For final goal: curve DOWN below labels (away from bar)
+        let baseControlY;
+        if (label === initialLabel) {
+          baseControlY = Math.min(labelBottomY, targetY) - controlYOffset;  // bend UP
+        } else {
+          baseControlY = Math.max(labelBottomY, targetY) + controlYOffset;  // bend DOWN
+        }
+
+        const controlX = (labelCenterX + markerX) / 2 + randomXOffset;
+        const controlY = baseControlY + randomYOffset;
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M ${labelCenterX},${labelBottomY} Q ${(labelCenterX + markerX) / 2},${controlY} ${markerX},${targetY}`);
+        path.setAttribute('d', `M ${labelCenterX},${labelBottomY} Q ${controlX},${controlY} ${markerX},${targetY}`);
         path.setAttribute('class', 'indicator-path');
         svg.appendChild(path);
       });
