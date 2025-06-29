@@ -3,216 +3,319 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fundraising Progress Bar</title>
+  <title>Fundraising Progress</title>
   <style>
     @font-face {
       font-family: 'OtakiVegeBags';
       src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
     }
+
     body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #fff;
-      color: #333;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2em;
     }
+
     #progress-container {
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    #bar-bg {
+      max-width: 1000px;
+      margin: auto;
       position: relative;
-      height: 32px;
-      background: #e0e0e0;
-      border-radius: 8px;
       overflow: visible;
-      margin-bottom: 12px;
-    }
-    #bar-initial-bg {
-      position: absolute;
-      top: 0; left: 0;
-      height: 100%;
-      background: #fff59d; /* lighter yellow background for initial goal area */
-      border-radius: 8px 0 0 8px;
-      z-index: 1;
-    }
-    #bar-fill {
-      position: absolute;
-      top: 0; left: 0;
-      height: 100%;
-      background: #f9d71c; /* bright yellow fill */
-      border-radius: 8px 0 0 8px;
-      z-index: 2;
-      width: 0;
-      transition: width 0.5s ease;
     }
 
-    /* NEW vertical divider lines */
-    #bar-initial-divider,
-    #bar-progress-divider {
-      position: absolute;
-      top: 0;
-      width: 3px;
-      height: 100%;
-      z-index: 6;
-    }
-    #bar-initial-divider {
-      background-color: black;
-    }
-    #bar-progress-divider {
-      background-color: #b38f00; /* darker yellow */
-    }
-
-    #progress-text {
-      font-family: 'OtakiVegeBags', cursive;
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-    #progress-text .line2 {
-      font-size: 18px;
-      margin-top: 4px;
-    }
     #labels-container {
       position: relative;
-      height: 100px;
-      margin-top: 0;
-      font-family: 'OtakiVegeBags', cursive;
-      font-size: 30px; /* 30% larger */
-      font-weight: normal;
-      color: black;
-    }
-    .label-bubble {
-      position: absolute;
-      background: #f9d71c;
-      padding: 6px 18px;
-      border-radius: 30px / 18px; /* elliptical bubble */
-      text-align: center;
-      line-height: 1.1;
-      white-space: normal;
+      height: 3.5em;
+      margin-bottom: 0.5em;
+      overflow: visible;
       user-select: none;
+    }
+
+    .label-wrapper {
+      position: absolute;
+      bottom: 10px;
+      white-space: nowrap;
+      z-index: 20;
+      background: #fff;
+      padding: 4px 12px;
+      border-radius: 999px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-family: 'OtakiVegeBags', sans-serif;
+      font-size: 1.22rem;
+      color: #000;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
       pointer-events: none;
+      overflow: visible;
+      z-index: 15;
+    }
+
+    .indicator-path {
+      fill: none;
+      stroke: black;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    #bar-bg {
+      position: relative;
+      background: #ddd;
+      border-radius: 8px;
+      height: 24px;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    #bar-initial-bg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background-color: #fff9c4;
+      z-index: 1;
+      border-radius: 8px 0 0 8px;
+    }
+
+    #bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: #f4c421;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 6px;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px 0 0 8px;
+      box-sizing: border-box;
+    }
+
+    /* New black vertical divider lines */
+    .vertical-divider {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background-color: black;
       z-index: 10;
-      max-width: 120px;
+    }
+
+    .vertical-divider.progress-end {
+      /* The line at the end of current progress */
+      border-radius: 0 2px 2px 0;
+    }
+
+    .vertical-divider.initial-goal {
+      /* The line separating initial and final goal */
+      border-radius: 2px 0 0 2px;
+    }
+
+    .progress-text {
+      margin-top: 1em;
+      font-size: 1rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+      position: relative;
+      z-index: 10;
+    }
+
+    @media (max-width: 500px) {
+      #labels-container {
+        height: 4em;
+      }
+      .label-wrapper {
+        font-size: 1.058rem;
+        padding: 4px 10px;
+      }
     }
   </style>
 </head>
 <body>
   <div id="progress-container">
-    <div id="progress-text">
-      <div class="line1">Loading…</div>
-      <div class="line2"></div>
-    </div>
+    <div id="labels-container"></div>
+
     <div id="bar-bg">
       <div id="bar-initial-bg"></div>
       <div id="bar-fill">Loading…</div>
-
-      <!-- Added vertical divider lines -->
-      <div id="bar-initial-divider"></div>
-      <div id="bar-progress-divider"></div>
+      <!-- Divider lines will be inserted here dynamically -->
     </div>
-    <div id="labels-container"></div>
+
+    <div class="progress-text" id="progress-line1">Loading…</div>
+    <div class="progress-text" id="progress-line2"></div>
   </div>
 
   <script>
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
 
-    const progressContainer = document.getElementById('progress-container');
-    const barBg = document.getElementById('bar-bg');
     const barFill = document.getElementById('bar-fill');
     const barInitialBg = document.getElementById('bar-initial-bg');
-    const initialDivider = document.getElementById('bar-initial-divider');
-    const progressDivider = document.getElementById('bar-progress-divider');
-
-    const progressText1 = document.querySelector('#progress-text .line1');
-    const progressText2 = document.querySelector('#progress-text .line2');
-
     const labelsContainer = document.getElementById('labels-container');
+    const progressLine1 = document.getElementById('progress-line1');
+    const progressLine2 = document.getElementById('progress-line2');
+    const progressContainer = document.getElementById('progress-container');
+    const barBg = document.getElementById('bar-bg');
 
-    function createLabel(percentX, htmlText) {
-      const label = document.createElement('div');
-      label.classList.add('label-bubble');
-      label.innerHTML = htmlText;
-      label.style.left = `calc(${percentX}% - 60px)`; // center horizontally, adjust for width
-      return label;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    labelsContainer.appendChild(svg);
+
+    function createLabel(percent, text) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'label-wrapper';
+      wrapper.innerHTML = text;
+      wrapper.style.left = percent + '%';
+      return wrapper;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
     }
 
     function adjustLabels(initialLabel, finalLabel) {
-      // Position initial label to left of initial goal line
-      initialLabel.style.top = '10px';
-      initialLabel.style.left = '0px';
+      const containerRect = progressContainer.getBoundingClientRect();
 
-      // Position final label to right of bar
-      finalLabel.style.top = '10px';
-      finalLabel.style.left = `calc(100% - ${finalLabel.offsetWidth}px)`;
+      const initialWidth = initialLabel.offsetWidth;
+      const finalWidth = finalLabel.offsetWidth;
+
+      const initialPos = (INITIAL_GOAL / FINAL_GOAL) * containerRect.width;
+      const finalPos = containerRect.width;
+
+      let initialLeft = initialPos - initialWidth / 2;
+      let finalLeft = finalPos - finalWidth / 2;
+
+      initialLeft = clamp(initialLeft, 0, containerRect.width - initialWidth);
+      finalLeft = clamp(finalLeft, 0, containerRect.width - finalWidth);
+
+      const minGap = 8;
+
+      if (initialLeft + initialWidth + minGap > finalLeft) {
+        initialLeft = clamp(initialLeft - (initialLeft + initialWidth + minGap - finalLeft), 0, containerRect.width - initialWidth);
+        finalLeft = clamp(finalLeft + (initialLeft + initialWidth + minGap - finalLeft), 0, containerRect.width - finalWidth);
+      }
+
+      initialLabel.style.left = (initialLeft / containerRect.width) * 100 + '%';
+      finalLabel.style.left = (finalLeft / containerRect.width) * 100 + '%';
     }
 
-    // Update function sets bar widths, text, labels, and indicator lines
-    function update(raised) {
+    function drawIndicatorLines(initialLabel, finalLabel) {
+      svg.innerHTML = '';
+
+      const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
 
-      // Width of initial goal background (always up to initial goal)
-      const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * barRect.width;
-      barInitialBg.style.width = initialBgWidth + 'px';
+      const barTopY = barRect.top - containerRect.top;
+      const targetY = barTopY - 1;
 
-      // Width of fill bar based on raised / final goal
-      const fillWidth = Math.min(raised / FINAL_GOAL, 1) * barRect.width;
-      barFill.style.width = fillWidth + 'px';
+      const initialLabelRect = initialLabel.getBoundingClientRect();
+      const finalLabelRect = finalLabel.getBoundingClientRect();
 
-      // Border radius logic
-      if (raised >= FINAL_GOAL) {
-        barFill.style.borderRadius = '8px';
-      } else {
-        barFill.style.borderRadius = '8px 0 0 8px';
-      }
+      const initialLabelCenterX = initialLabelRect.left + initialLabelRect.width / 2 - containerRect.left;
+      const initialLabelBottomY = initialLabelRect.bottom - containerRect.top;
 
-      // Round percentage to integer
-      const percentInitial = Math.round(Math.min(raised / INITIAL_GOAL, 1) * 100);
+      const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
+      const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
 
-      if (raised < INITIAL_GOAL) {
-        progressText1.textContent = `${percentInitial}% of first $${INITIAL_GOAL.toLocaleString()} goal!`;
-        progressText2.textContent = `$${(INITIAL_GOAL - raised).toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
-      } else {
-        progressText1.textContent = `Reached initial goal!`;
-        const diff = FINAL_GOAL - raised;
-        if (diff > 0) {
-          progressText2.textContent = `$${diff.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
-        } else {
-          progressText2.textContent = `Final goal reached! Thank you!`;
-        }
-      }
+      const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
+      const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-      // Clear old labels and create new ones
-      labelsContainer.innerHTML = '';
-      const initialLabel = createLabel((INITIAL_GOAL / FINAL_GOAL) * 100, 'Initial goal<br>$10,000');
-      const finalLabel = createLabel(100, 'Final goal<br>$12,000');
-      labelsContainer.appendChild(initialLabel);
-      labelsContainer.appendChild(finalLabel);
-      adjustLabels(initialLabel, finalLabel);
+      const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
+      const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
+      const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
+      const initCtrlYOffset = 12;
+      const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
 
-      // Position vertical divider lines inside bar
-      const initialLeftPx = (INITIAL_GOAL / FINAL_GOAL) * barRect.width;
-      initialDivider.style.left = initialLeftPx + 'px';
+      const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathInit.setAttribute('class', 'indicator-path');
+      pathInit.setAttribute('d',
+        `M${initialLabelCenterX},${initialLabelBottomY} 
+         C${initCtrl1X},${initCtrlY} ${initCtrl2X},${initCtrlY} ${initialMarkerX},${targetY}`
+      );
+      svg.appendChild(pathInit);
 
-      const progressLeftPx = Math.min(raised / FINAL_GOAL, 1) * barRect.width;
-      progressDivider.style.left = progressLeftPx + 'px';
+      const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
+      const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
+      const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
+      const finalCtrlYOffset = 12;
+      const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
 
-      // Show progress divider only if raised < initial goal
-      if (raised < INITIAL_GOAL) {
-        progressDivider.style.display = 'block';
-      } else {
-        progressDivider.style.display = 'none';
-      }
+      const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathFinal.setAttribute('class', 'indicator-path');
+      pathFinal.setAttribute('d',
+        `M${finalLabelCenterX},${finalLabelBottomY} 
+         C${finalCtrl1X},${finalCtrlY} ${finalCtrl2X},${finalCtrlY} ${finalMarkerX},${targetY}`
+      );
+      svg.appendChild(pathFinal);
     }
 
-    // Example call - replace with live data fetch as needed
-    let raisedAmount = 7450; // example amount raised
-    update(raisedAmount);
+    function update() {
+      fetch('/.netlify/functions/getProgress')
+        .then(res => res.json())
+        .then(data => {
+          const raised = data.total;
+          const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+          const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
-    // Optional: update on window resize
-    window.addEventListener('resize', () => update(raisedAmount));
+          barFill.style.width = percentTotal + '%';
+          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
+
+          const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
+          barInitialBg.style.width = initialBgWidth + '%';
+
+          // Remove existing divider lines before adding new
+          const existingDividers = barBg.querySelectorAll('.vertical-divider');
+          existingDividers.forEach(divider => divider.remove());
+
+          // Add vertical divider line at initial goal marker
+          const initialDivider = document.createElement('div');
+          initialDivider.className = 'vertical-divider initial-goal';
+          initialDivider.style.left = initialBgWidth + '%';
+          barBg.appendChild(initialDivider);
+
+          // Add vertical divider line at current progress end
+          const progressDivider = document.createElement('div');
+          progressDivider.className = 'vertical-divider progress-end';
+          progressDivider.style.left = percentTotal + '%';
+          barBg.appendChild(progressDivider);
+
+          const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
+          const remainingFinal = Math.max(0, FINAL_GOAL - raised);
+
+          progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
+          progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+
+          labelsContainer.innerHTML = '';
+          labelsContainer.appendChild(svg);
+
+          const initialLabel = createLabel(initialBgWidth, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
+          const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
+
+          labelsContainer.appendChild(initialLabel);
+          labelsContainer.appendChild(finalLabel);
+
+          adjustLabels(initialLabel, finalLabel);
+          drawIndicatorLines(initialLabel, finalLabel);
+        })
+        .catch(err => {
+          console.error(err);
+          barFill.textContent = 'Error loading';
+          progressLine1.textContent = '';
+          progressLine2.textContent = '';
+        });
+    }
+
+    window.addEventListener('resize', update);
+    update();
   </script>
 </body>
 </html>
