@@ -17,6 +17,21 @@
       margin: auto;
     }
 
+    .label-layer {
+      position: relative;
+      height: 1.5em;
+      margin-bottom: 0.25em;
+    }
+
+    .goal-label {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: #000;
+      white-space: nowrap;
+    }
+
     .bar-bg {
       position: relative;
       background: #ddd;
@@ -30,7 +45,7 @@
       left: 0;
       top: 0;
       height: 100%;
-      background-color: #f8f8f8; /* off-white for initial goal range */
+      background-color: #f8f8f8; /* off-white */
       z-index: 1;
     }
 
@@ -60,25 +75,6 @@
       z-index: 3;
     }
 
-    .goal-label {
-      position: absolute;
-      top: -1.5em; /* Above the bar */
-      transform: translateX(-50%);
-      font-size: 0.75rem;
-      color: #000;
-      white-space: nowrap;
-      z-index: 3;
-    }
-
-    .goal-label.right {
-      transform: translateX(-100%);
-    }
-
-    .goal-label.final {
-      top: -1.5em;
-      transform: translateX(-100%); /* align final goal right edge */
-    }
-
     .progress-text {
       margin-top: 0.5em;
       font-size: 1rem;
@@ -87,10 +83,16 @@
 </head>
 <body>
   <div id="progress-container">
+    <!-- Label container above the bar -->
+    <div class="label-layer" id="label-layer"></div>
+
+    <!-- The progress bar -->
     <div class="bar-bg" id="bar-bg">
       <div class="bar-initial-bg" id="bar-initial-bg"></div>
       <div class="bar-fill" id="bar-fill">Loading…</div>
     </div>
+
+    <!-- Progress text -->
     <div class="progress-text" id="progress-text">Loading…</div>
     <div class="progress-text" id="stretch-text"></div>
   </div>
@@ -101,11 +103,13 @@
     const barInitialBg = document.getElementById('bar-initial-bg');
     const progressText = document.getElementById('progress-text');
     const stretchText = document.getElementById('stretch-text');
+    const labelLayer = document.getElementById('label-layer');
 
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
 
-    fetch('/.netlify/functions/getProgress')
+    // Fetch from Netlify Function
+    fetch('/.netlify/functions/get-total')
       .then(res => res.json())
       .then(data => {
         const raised = data.total;
@@ -116,20 +120,17 @@
         barFill.style.width = `${percentTotal}%`;
         barFill.textContent = `${percentInitial.toFixed(1)}% of initial goal`;
 
-        // Initial goal range background
+        // Initial background fill
         const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
         barInitialBg.style.width = `${initialBgWidth}%`;
 
-        // Text
+        // Progress text
         progressText.textContent = `$${raised.toLocaleString()} raised of initial $${INITIAL_GOAL.toLocaleString()} goal!`;
-
         const remaining = Math.max(0, FINAL_GOAL - raised);
         stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        // Add marker and label for initial goal
+        // Add markers and labels
         addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
-
-        // Add marker and label for final goal
         addMarker(100, `final goal $${FINAL_GOAL.toLocaleString()}`, true);
       })
       .catch(err => {
@@ -142,15 +143,18 @@
       const marker = document.createElement('div');
       marker.className = 'marker';
       marker.style.left = `${percent}%`;
+      barBg.appendChild(marker);
 
       const label = document.createElement('div');
       label.className = 'goal-label';
-      if (isFinal) label.classList.add('final');
       label.textContent = labelText;
       label.style.left = `${percent}%`;
 
-      barBg.appendChild(marker);
-      barBg.appendChild(label);
+      if (isFinal) {
+        label.style.transform = 'translateX(-100%)';
+      }
+
+      labelLayer.appendChild(label);
     }
   </script>
 </body>
