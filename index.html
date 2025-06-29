@@ -70,6 +70,7 @@
       pointer-events: none;
       text-align: right;
       padding-right: 4px; /* space so label text doesn't touch the marker */
+      transition: transform 0.3s ease;
     }
 
     .goal-label.final,
@@ -88,7 +89,6 @@
     #progress-line1, #progress-line2 {
       max-width: 100%;
       word-wrap: break-word;
-      /* optionally add spacing between lines */
       margin-bottom: 0.25em;
     }
   </style>
@@ -135,6 +135,8 @@
 
         addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
         addMarker(100, `final goal $${FINAL_GOAL.toLocaleString()}`, true);
+
+        preventLabelOverlap();
       })
       .catch(err => {
         console.error(err);
@@ -161,6 +163,23 @@
 
       barBg.appendChild(marker);
       barBg.appendChild(label);
+    }
+
+    function preventLabelOverlap() {
+      const labels = barBg.querySelectorAll('.goal-label');
+      if (labels.length < 2) return;
+
+      const label1 = labels[0];
+      const label2 = labels[1];
+
+      const rect1 = label1.getBoundingClientRect();
+      const rect2 = label2.getBoundingClientRect();
+
+      if (rect1.right > rect2.left) {
+        const overlap = rect1.right - rect2.left;
+        label1.style.transform = `translateX(calc(-100% - ${overlap / 2 + 5}px))`;
+        label2.style.transform = `translateX(calc(-100% + ${overlap / 2 + 5}px))`;
+      }
     }
   </script>
 </body>
