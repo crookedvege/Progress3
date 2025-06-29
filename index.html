@@ -3,127 +3,93 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Progress</title>
+  <title>Progress Bar Stretch Goal</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      background: transparent;
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #f9f9f9;
       color: #333;
     }
-
-    .bar-bg {
-      background: #e0e0e0;
-      border-radius: 8px;
+    #progress-container {
+      margin-top: 2rem;
+      position: relative;
+      height: 30px;
+      background-color: #eee;
+      border-radius: 15px;
       overflow: hidden;
-      height: 20px;
-      position: relative;
-      width: 100%;
     }
-
-    .bar-fill {
-      background: #f9ca24;
+    #progress-bar {
       height: 100%;
+      background-color: #4caf50;
       width: 0%;
-      transition: width 0.6s ease;
-      position: relative;
+      transition: width 0.5s ease-in-out;
     }
-
-    .bar-text {
+    .goal-marker {
       position: absolute;
-      right: 8px;
-      top: 1px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #333;
-    }
-
-    .summary {
-      margin-top: 6px;
+      top: -20px;
       font-size: 0.9rem;
-      text-align: left;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    #main-goal-marker {
+      color: black;
+      left: 0;
+      transform: translateX(0%);
+    }
+    #stretch-goal-marker {
+      color: gray;
+      right: 0;
+      transform: translateX(0%);
+    }
+    .text {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="bar-bg">
-    <div class="bar-fill" id="bar-fill">
-      <div class="bar-text" id="bar-text">0%</div>
-    </div>
+  <h1>Progress Tracker</h1>
+  <div id="progress-container">
+    <div id="progress-bar"></div>
+    <div id="main-goal-marker" class="goal-marker">first goal, $10,000</div>
+    <div id="stretch-goal-marker" class="goal-marker">final goal of $12,000</div>
   </div>
-  <div class="summary" id="summary">Loading...</div>
+  <div class="text" id="main-text"></div>
+  <div class="text" id="stretch-text"></div>
 
   <script>
-  async function fetchProgress() {
-    try {
-      const response = await fetch('/.netlify/functions/getProgress');
-      const data = await response.json();
-      console.log("Fetched data:", data);
+    const mainGoal = 10000;
+    const stretchGoal = 12000;
 
-      const { total, goal, stretchGoal } = data;
+    fetch('/.netlify/functions/getProgress')
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          console.error(data.error);
+          return;
+        }
 
-      const barFill = document.getElementById('bar-fill');
-      const barText = document.getElementById('bar-text');
-      const summary = document.getElementById('summary');
+        const raised = data.raised;
+        const percentage = Math.min((raised / mainGoal) * 100, 100);
+        document.getElementById('progress-bar').style.width = `${(raised / stretchGoal) * 100}%`;
 
-      const percentOfStretch = Math.min((total / stretchGoal) * 100, 100);
-      const percentOfMain = Math.min((total / goal) * 100, 100);
+        document.getElementById('main-text').textContent = `${Math.floor(percentage)}% of first $${mainGoal.toLocaleString()} goal!`;
 
-      // Update the bar fill width
-      barFill.style.width = `${percentOfStretch}%`;
-
-      // Update the label text
-      if (total >= goal) {
-        barText.textContent = `${percentOfStretch.toFixed(1)}%`;
-        summary.textContent = `${percentOfStretch.toFixed(1)}% of stretch goal raised!`;
-      } else {
-        const remaining = Math.max(stretchGoal - total, 0);
-        barText.textContent = `${percentOfMain.toFixed(1)}%`;
-        summary.textContent = `${percentOfMain.toFixed(1)}% of main goal — $${remaining.toLocaleString()} from unlocking the stretch goal!`;
-      }
-
-      // Add visual goal markers
-      const barBg = document.querySelector('.bar-bg');
-      const markerContainer = document.createElement('div');
-      markerContainer.style.position = 'absolute';
-      markerContainer.style.top = 0;
-      markerContainer.style.left = 0;
-      markerContainer.style.height = '100%';
-      markerContainer.style.width = '100%';
-
-      const addMarker = (leftPercent, label) => {
-        const marker = document.createElement('div');
-        marker.style.position = 'absolute';
-        marker.style.left = `${leftPercent}%`;
-        marker.style.top = 0;
-        marker.style.bottom = 0;
-        marker.style.width = '2px';
-        marker.style.background = '#000';
-
-        const tag = document.createElement('div');
-        tag.textContent = label;
-        tag.style.position = 'absolute';
-        tag.style.top = '-1.5em';
-        tag.style.left = '50%';
-        tag.style.transform = 'translateX(-50%)';
-        tag.style.fontSize = '0.75rem';
-
-        marker.appendChild(tag);
-        markerContainer.appendChild(marker);
-      };
-
-      addMarker((goal / stretchGoal) * 100, 'Main Goal');
-      addMarker(100, 'Stretch Goal');
-
-      barBg.appendChild(markerContainer);
-    } catch (error) {
-      console.error("Error fetching progress:", error);
-    }
-  }
-
-  fetchProgress();
-</script>
-
+        if (raised >= mainGoal) {
+          const remaining = stretchGoal - raised;
+          document.getElementById('stretch-text').textContent =
+            remaining > 0
+              ? `$${remaining.toLocaleString()} away from our final goal of $${stretchGoal.toLocaleString()}`
+              : `We've hit our final goal of $${stretchGoal.toLocaleString()}!`;
+        } else {
+          const remaining = mainGoal - raised;
+          document.getElementById('stretch-text').textContent =
+            `$${(stretchGoal - raised).toLocaleString()} away from our final goal of $${stretchGoal.toLocaleString()}`;
+        }
+      })
+      .catch(error => console.error('Fetch error:', error));
+  </script>
 </body>
 </html>
