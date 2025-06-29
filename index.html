@@ -30,7 +30,7 @@
       left: 0;
       top: 0;
       height: 100%;
-      background-color: #f8f8f8; /* off-white */
+      background-color: #f8f8f8; /* off-white for initial goal range */
       z-index: 1;
     }
 
@@ -74,6 +74,17 @@
       transform: translateX(-100%);
     }
 
+    .goal-label.end-inside {
+      top: 0.25em;
+      right: 8px;
+      left: auto;
+      transform: none;
+      font-size: 0.75rem;
+      color: #000;
+      position: absolute;
+      z-index: 3;
+    }
+
     .progress-text {
       margin-top: 0.5em;
       font-size: 1rem;
@@ -85,6 +96,7 @@
     <div class="bar-bg" id="bar-bg">
       <div class="bar-initial-bg" id="bar-initial-bg"></div>
       <div class="bar-fill" id="bar-fill">Loading…</div>
+      <div class="goal-label end-inside" id="final-label">$12,000 final goal</div>
     </div>
     <div class="progress-text" id="progress-text">Loading…</div>
     <div class="progress-text" id="stretch-text"></div>
@@ -100,32 +112,38 @@
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
 
-    (function () {
-  const raised = 8410; // <== Replace this with your real value later
-  const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
-  const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
+    // Use the actual Netlify function name
+    fetch('/.netlify/functions/getProgress')
+      .then(res => res.json())
+      .then(data => {
+        const raised = data.total;
+        const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+        const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
-  // Fill bar
-  barFill.style.width = `${percentTotal}%`;
-  barFill.textContent = `${percentInitial.toFixed(1)}% of initial goal`;
+        // Fill bar
+        barFill.style.width = `${percentTotal}%`;
+        barFill.textContent = `${percentInitial.toFixed(1)}% of initial goal`;
 
-  // Initial background
-  const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
-  barInitialBg.style.width = `${initialBgWidth}%`;
+        // Off-white background for initial goal
+        const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
+        barInitialBg.style.width = `${initialBgWidth}%`;
 
-  // Text
-  progressText.textContent = `$${raised.toLocaleString()} raised of initial $${INITIAL_GOAL.toLocaleString()} goal!`;
+        // Text
+        progressText.textContent = `$${raised.toLocaleString()} raised of initial $${INITIAL_GOAL.toLocaleString()} goal!`;
 
-  const remaining = Math.max(0, FINAL_GOAL - raised);
-  stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
+        const remaining = Math.max(0, FINAL_GOAL - raised);
+        stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-  // Markers
-  addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `$${INITIAL_GOAL.toLocaleString()} initial goal`);
-  addMarker(100, `$${FINAL_GOAL.toLocaleString()} final goal`, true);
-})();
+        // Markers
+        addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `$${INITIAL_GOAL.toLocaleString()} initial goal`);
+      })
+      .catch(err => {
+        console.error(err);
+        barFill.textContent = 'Error loading';
+        progressText.textContent = '';
+      });
 
-
-    function addMarker(percent, labelText, alignRight = false) {
+    function addMarker(percent, labelText) {
       const marker = document.createElement('div');
       marker.className = 'marker';
       marker.style.left = `${percent}%`;
@@ -134,10 +152,6 @@
       label.className = 'goal-label';
       label.textContent = labelText;
       label.style.left = `${percent}%`;
-
-      if (alignRight) {
-        label.classList.add('right');
-      }
 
       barBg.appendChild(marker);
       barBg.appendChild(label);
