@@ -18,7 +18,6 @@
     overflow: visible;
   }
 
-  /* Container for labels and indicator lines */
   #labels-container {
     position: relative;
     height: 3.5em;
@@ -29,7 +28,7 @@
 
   .label-wrapper {
     position: absolute;
-    bottom: 10px; /* distance above bar */
+    bottom: 10px;
     white-space: nowrap;
     z-index: 20;
     background: #fff;
@@ -43,9 +42,21 @@
 
   .indicator-line {
     position: absolute;
-    width: 2px;
-    background: black;
+    height: 2px;
+    background: linear-gradient(to right, #333, #000);
+    border-radius: 1px;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.4);
     z-index: 15;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    opacity: 0;
+    animation: fadeInLine 0.4s ease-out forwards;
+  }
+
+  @keyframes fadeInLine {
+    to {
+      opacity: 1;
+    }
   }
 
   #bar-bg {
@@ -193,7 +204,6 @@
         const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
         line.style.width = length + 'px';
-        line.style.height = '2px';
         line.style.left = labelCenterX + 'px';
         line.style.top = labelBottomY + 'px';
         line.style.transformOrigin = '0 0';
@@ -243,7 +253,6 @@
     }
 
     window.addEventListener('resize', update);
-
     update();
   </script>
 </body>
