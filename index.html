@@ -18,11 +18,11 @@
     }
 
     .bar-bg {
-      position: relative; /* container for absolute elements */
+      position: relative;
       background: #ddd;
       border-radius: 8px;
       height: 24px;
-      overflow: visible; /* so label can overflow above */
+      overflow: visible;
     }
 
     .bar-initial-bg {
@@ -52,67 +52,39 @@
       box-sizing: border-box;
     }
 
-    /* Vertical marker line inside the bar */
-    .marker {
-      position: absolute;
-      top: 0;
-      height: 100%;
-      width: 2px;
-      background: #000;
-      z-index: 3;
-    }
-
-    /* Label above the bar, can move horizontally */
     .goal-label {
       position: absolute;
-      top: -2.4em; /* space above bar */
+      top: -2.5em;
       font-size: 0.75rem;
       color: #000;
       white-space: nowrap;
       z-index: 4;
-      pointer-events: none;
-      text-align: right;
-      padding-right: 6px;
-      background: #fff;
-      padding-left: 4px;
-      padding-right: 8px;
-      border-radius: 3px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-      /* CSS variable for dynamic arrow positioning */
-      --arrow-right: 6px;
+      transform: translateX(-50%);
+      background: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      text-align: center;
     }
 
-    /* Small caret/arrow connecting label to marker */
-    .goal-label::after {
-      content: '';
+    .label-line {
       position: absolute;
-      bottom: -6px; /* below label */
-      right: var(--arrow-right);
-      border-width: 6px 6px 0 6px;
-      border-style: solid;
-      border-color: #fff transparent transparent transparent;
-      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
-    }
-
-    /* Prevent label from going off left edge */
-    .goal-label.left-edge {
-      left: 0 !important;
-      transform: none !important;
-      padding-left: 8px;
-      text-align: left;
+      width: 2px;
+      height: 1.5em;
+      background: #000;
+      top: -1em;
+      z-index: 3;
+      transform: translateX(-50%);
     }
 
     .progress-text {
-      margin-top: 0.5em;
+      margin-top: 1em;
       font-size: 1rem;
-      line-height: 1.3;
+      line-height: 1.4;
     }
 
-    /* Separate lines for progress text */
     #progress-line1, #progress-line2 {
-      max-width: 100%;
       word-wrap: break-word;
-      margin-bottom: 0.25em;
     }
   </style>
 </head>
@@ -155,10 +127,8 @@
         progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
         progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`, false);
-        addMarker(100, `final goal $${FINAL_GOAL.toLocaleString()}`, true);
-
-        preventLabelOverlap();
+        addLabel((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
+        addLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
       })
       .catch(err => {
         console.error(err);
@@ -167,69 +137,24 @@
         progressLine2.textContent = '';
       });
 
-    function addMarker(percent, labelText, isFinal = false) {
-      // Create marker line inside bar
-      const marker = document.createElement('div');
-      marker.className = 'marker';
-      marker.style.left = `${percent}%`;
+    function addLabel(percent, labelText) {
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'absolute';
+      wrapper.style.left = `${percent}%`;
+      wrapper.style.top = '-2.5em';
+      wrapper.style.transform = 'translateX(-50%)';
+      wrapper.style.zIndex = '4';
 
-      // Create label above bar
       const label = document.createElement('div');
       label.className = 'goal-label';
       label.textContent = labelText;
 
-      const barWidth = barBg.clientWidth;
-      let labelLeft = (percent / 100) * barWidth;
+      const line = document.createElement('div');
+      line.className = 'label-line';
 
-      label.style.left = `${labelLeft}px`;
-      label.style.transform = 'translateX(-100%)'; // right-align label on marker by default
-
-      barBg.appendChild(marker);
-      barBg.appendChild(label);
-
-      // After appending, adjust caret arrow position
-      // Calculate horizontal offset inside the label for the arrow
-      const labelRect = label.getBoundingClientRect();
-      const barRect = barBg.getBoundingClientRect();
-
-      // Marker absolute position relative to viewport
-      const markerAbsX = barRect.left + (percent / 100) * barWidth;
-      // Distance from label right edge to marker
-      const offsetFromRight = labelRect.right - markerAbsX;
-
-      // Update CSS variable to position caret arrow exactly
-      label.style.setProperty('--arrow-right', `${offsetFromRight}px`);
-    }
-
-    function preventLabelOverlap() {
-      const labels = barBg.querySelectorAll('.goal-label');
-      if (labels.length < 2) return;
-
-      const label1 = labels[0];
-      const label2 = labels[1];
-
-      const rect1 = label1.getBoundingClientRect();
-      const rect2 = label2.getBoundingClientRect();
-
-      // Check if labels overlap horizontally
-      if (rect1.right > rect2.left) {
-        const overlap = rect1.right - rect2.left;
-        // Push label1 left and label2 right to separate them
-        label1.style.transform = `translateX(calc(-100% - ${overlap / 2 + 5}px))`;
-        label2.style.transform = `translateX(calc(-100% + ${overlap / 2 + 5}px))`;
-      }
-
-      // Make sure no label goes beyond the left edge of the container
-      [label1, label2].forEach(label => {
-        const rect = label.getBoundingClientRect();
-        const containerRect = barBg.getBoundingClientRect();
-        if (rect.left < containerRect.left) {
-          // Remove right-align transform, left-align and add padding
-          label.style.transform = 'none';
-          label.style.left = '0';
-          label.classList.add('left-edge');
-        }
-      });
+      wrapper.appendChild(label);
+      wrapper.appendChild(line);
+      barBg.appendChild(wrapper);
     }
   </script>
 </body>
