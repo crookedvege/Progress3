@@ -111,13 +111,12 @@
     }
 
     #countdown-timer {
-      margin-top: 0.5em;
+      margin-top: 0.7em;
       font-weight: bold;
       color: #e37f4c;
-      font-size: 1rem;
+      font-size: 1.1rem;
+      line-height: 1.3;
       word-wrap: break-word;
-      position: relative;
-      z-index: 10;
     }
 
     @media (max-width: 500px) {
@@ -127,6 +126,9 @@
       .label-wrapper {
         font-size: 1.058rem;
         padding: 4px 10px;
+      }
+      #countdown-timer {
+        font-size: 1rem;
       }
     }
   </style>
@@ -290,98 +292,22 @@
     }
 
     function updateTimer() {
-      // NZ timezone offset is +12 or +13 depending on daylight saving.
-      // We'll use Intl API to convert to NZ timezone for accuracy.
       const now = new Date();
 
-      // Target time: 11:59pm July 6, New Zealand time
-      // Use 'Pacific/Auckland' timezone with Intl.DateTimeFormat for calculation.
-      // We'll get current time in NZ then calculate difference.
+      const targetYear = 2025;
+      const targetMonth = 7; // July
+      const targetDay = 6;
+      const targetHour = 23;
+      const targetMinute = 59;
 
-      // Calculate target time in UTC
-      // Construct a Date for July 6, 23:59 NZ time:
-      // Create the date as if in UTC then adjust for NZ offset
+      // NZST is UTC+12 in July (no daylight savings)
+      // So target UTC time = July 6, 2025 23:59 NZST = July 6, 2025 11:59 -12 hours UTC
+      const targetTimeUTC = Date.UTC(targetYear, targetMonth - 1, targetDay, targetHour - 12, targetMinute, 0);
 
-      // Use the Date constructor with Date.UTC and offset for Auckland timezone
-      // But easier to use Intl and manual calculation for remaining ms.
-
-      // Use library approach:
-      // Get now in NZ time
-      const formatter = new Intl.DateTimeFormat('en-NZ', {
-        timeZone: 'Pacific/Auckland',
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        hour12: false,
-      });
-      const parts = formatter.formatToParts(now);
-      const nzYear = Number(parts.find(p => p.type === 'year').value);
-      const nzMonth = Number(parts.find(p => p.type === 'month').value);
-      const nzDay = Number(parts.find(p => p.type === 'day').value);
-
-      // Target date: July 6 same year
-      const targetDateNZ = new Date(Date.UTC(nzYear, 6 - 1, 6, 23, 59, 0)); 
-      // Date.UTC uses zero-based months, so 6 - 1 = 5 (June), July is 6, so 7 - 1 = 6
-      // Oops: July is 7th month: 7 - 1 = 6
-      // Fix that:
-      // Let's correct:
-      // So to set July 6: month = 6 (July is month 7, zero-based is 6)
-      // So:
-      const correctedTargetDateNZ = new Date(Date.UTC(nzYear, 6, 6, 23, 59, 0));
-
-      // Now get offset between UTC and NZ time on target date:
-      // We need target date in Pacific/Auckland timezone at 23:59, but
-      // Date.UTC is always UTC time, so we must subtract the offset.
-
-      // Calculate offset of NZ at target date in ms
-      const targetLocalTime = new Date(Date.UTC(nzYear, 6, 6, 23, 59, 0));
-      const targetLocalISO = targetLocalTime.toISOString();
-
-      // Instead of complicated timezone math, let's create a target in NZ time by parsing the ISO string for that timezone:
-
-      // Get target in NZ timezone as Date object:
-      const targetNZ = new Date(new Intl.DateTimeFormat('en-NZ', {
-        timeZone: 'Pacific/Auckland',
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        hour12: false,
-      }).formatToParts(new Date(Date.UTC(nzYear, 6, 6, 23, 59, 0)))
-      .map(p => p.value).join(' '));
-
-      // This approach is too complex, better to just create target date in NZ timezone as local time and calculate difference with now in NZ timezone.
-
-      // Instead, a simpler approach:
-      // Use Date object with NZ timezone offset for now, then target is 2025-07-06T23:59:00 NZ time
-
-      // Create target date string in ISO with NZ time zone offset
-      // As NZ is UTC+12 or UTC+13, but we can hardcode to 12 for now, or calculate dynamically
-
-      // Let's hardcode for simplicity (this won't adjust for DST exactly but close enough):
-      // NZST is UTC+12, NZDT is UTC+13 during daylight saving (usually Oct-April)
-
-      // We check month to apply offset:
-      const month = now.getMonth() + 1; // 1-based month
-      const isDst = month >= 10 || month <= 4; // Approx DST from October to April
-      const nzOffsetHours = isDst ? 13 : 12;
-
-      // Create target date in UTC by subtracting offset
-      // 11:59pm July 6 NZ time in UTC:
-      // July 6 23:59 NZ time minus offset in hours
-
-      const targetUTC = new Date(Date.UTC(nzYear, 6 - 1, 6, 23 - nzOffsetHours, 59, 0));
-
-      // Calculate difference
-      const diff = targetUTC.getTime() - now.getTime();
+      const diff = targetTimeUTC - now.getTime();
 
       if (diff <= 0) {
-        countdownTimer.textContent = 'The deadline has passed.';
+        countdownTimer.textContent = 'The fundraiser has closed!';
         return;
       }
 
@@ -396,9 +322,10 @@
 
     window.addEventListener('resize', update);
     update();
-
-    setInterval(updateTimer, 1000);
-    updateTimer();
+    setInterval(() => {
+      update();
+      updateTimer();
+    }, 1000);
   </script>
 </body>
 </html>
