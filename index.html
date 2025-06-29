@@ -15,6 +15,39 @@
       width: 100%;
       max-width: 1000px;
       margin: auto;
+      position: relative;
+    }
+
+    #labels-container {
+      position: relative;
+      height: 3.5em;
+      margin-bottom: 0.5em;
+      overflow: visible;
+    }
+
+    .label-wrapper {
+      position: absolute;
+      top: 0;
+      white-space: nowrap;
+      font-size: 0.75rem;
+      color: #000;
+      background: #fff;
+      border: 1px solid #aaa;
+      padding-right: 0.25em;
+      user-select: none;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+
+    /* Ensure initial label sticks left, final sticks right inside container */
+    #initial-label {
+      left: 0;
+      transform: translateX(0);
+    }
+
+    #final-label {
+      right: 0;
+      transform: translateX(0);
     }
 
     .bar-bg {
@@ -23,6 +56,7 @@
       border-radius: 8px;
       height: 24px;
       overflow: hidden;
+      margin-bottom: 1em;
     }
 
     .bar-initial-bg {
@@ -32,7 +66,7 @@
       height: 100%;
       background-color: #fff9c4; /* light yellow */
       z-index: 1;
-      width: 0; /* will be set dynamically */
+      width: 0; /* set dynamically */
     }
 
     .bar-fill {
@@ -50,47 +84,10 @@
       font-weight: bold;
       border-radius: 8px 0 0 8px;
       box-sizing: border-box;
-      width: 0; /* will be set dynamically */
-    }
-
-    #labels-container {
-      position: relative;
-      height: 3.5em;
-      margin-bottom: 0.5em;
-      overflow: visible;
-
-      /* Debug outline to visualize container boundaries */
-      outline: 2px dashed green;
-    }
-
-    .label-wrapper {
-      position: absolute;
-      top: 0;
-      white-space: nowrap;
-      font-size: 0.75rem;
-      color: #000;
-      background: #fff;
-
-      /* Debug border to visualize label boundaries */
-      border: 1px solid blue;
-      padding-right: 0.25em; /* small padding to separate from line */
-      user-select: none;
-    }
-
-    /* Make sure the initial label doesn't overflow left */
-    #initial-label {
-      left: 0;
-      transform: translateX(0);
-    }
-
-    /* Make sure the final label stays within container */
-    #final-label {
-      right: 0;
-      transform: translateX(0);
+      width: 0; /* set dynamically */
     }
 
     .progress-text {
-      margin-top: 0.5em;
       font-size: 1rem;
       white-space: normal;
       word-wrap: break-word;
@@ -99,26 +96,24 @@
 
     .indicator-line {
       position: absolute;
-      width: 4px; /* thicker for debug */
-      background: red; /* bright color to ensure visibility */
-      z-index: 100;
-      opacity: 0.8;
-      box-shadow: 0 0 5px rgba(255,0,0,0.5);
+      height: 2px;
+      background: #555;
+      z-index: 10;
       pointer-events: none;
+      transform-origin: 0 0;
     }
   </style>
 </head>
 <body>
   <div id="progress-container">
     <div id="labels-container">
-      <!-- Labels inserted here dynamically -->
+      <!-- Labels inserted dynamically -->
     </div>
     <div class="bar-bg" id="bar-bg">
       <div class="bar-initial-bg" id="bar-initial-bg"></div>
       <div class="bar-fill" id="bar-fill">Loading…</div>
     </div>
     <div class="progress-text" id="progress-text">Loading…</div>
-    <div class="progress-text" id="stretch-text"></div>
   </div>
 
   <script>
@@ -126,7 +121,6 @@
     const barBg = document.getElementById('bar-bg');
     const barInitialBg = document.getElementById('bar-initial-bg');
     const progressText = document.getElementById('progress-text');
-    const stretchText = document.getElementById('stretch-text');
     const labelsContainer = document.getElementById('labels-container');
     const progressContainer = document.getElementById('progress-container');
 
@@ -148,46 +142,44 @@
 
         progressText.textContent = `$${raised.toLocaleString()} raised! We're only $${Math.max(0, INITIAL_GOAL - raised).toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${Math.max(0, FINAL_GOAL - raised).toLocaleString()} from meeting final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        stretchText.textContent = ''; // no longer needed with new text format
-
-        // Clear old labels before adding new
+        // Clear old labels & lines
         labelsContainer.innerHTML = '';
 
-        // Create and append initial label
-        const initialLabelWrapper = document.createElement('div');
-        initialLabelWrapper.className = 'label-wrapper';
-        initialLabelWrapper.id = 'initial-label';
-        initialLabelWrapper.textContent = `initial goal $${INITIAL_GOAL.toLocaleString()}`;
-        labelsContainer.appendChild(initialLabelWrapper);
+        // Create labels
+        const initialLabel = document.createElement('div');
+        initialLabel.className = 'label-wrapper';
+        initialLabel.id = 'initial-label';
+        initialLabel.textContent = `initial goal $${INITIAL_GOAL.toLocaleString()}`;
 
-        // Create and append final label
-        const finalLabelWrapper = document.createElement('div');
-        finalLabelWrapper.className = 'label-wrapper';
-        finalLabelWrapper.id = 'final-label';
-        finalLabelWrapper.textContent = `final goal $${FINAL_GOAL.toLocaleString()}`;
-        labelsContainer.appendChild(finalLabelWrapper);
+        const finalLabel = document.createElement('div');
+        finalLabel.className = 'label-wrapper';
+        finalLabel.id = 'final-label';
+        finalLabel.textContent = `final goal $${FINAL_GOAL.toLocaleString()}`;
 
-        positionLabelsAndDrawLines(initialLabelWrapper, finalLabelWrapper);
+        labelsContainer.appendChild(initialLabel);
+        labelsContainer.appendChild(finalLabel);
+
+        // Position labels & draw indicator lines
+        positionLabelsAndDrawLines(initialLabel, finalLabel);
       })
       .catch(err => {
         console.error(err);
         barFill.textContent = 'Error loading';
         progressText.textContent = '';
-        stretchText.textContent = '';
       });
 
     function positionLabelsAndDrawLines(initialLabel, finalLabel) {
-      // Wait for layout
+      // Wait for layout to settle
       requestAnimationFrame(() => {
         const containerRect = progressContainer.getBoundingClientRect();
         const barRect = barBg.getBoundingClientRect();
 
-        // Position initial label aligned to left edge of bar (0%)
+        // === Position initial label ===
         initialLabel.style.top = '0px';
         initialLabel.style.left = '0px';
         initialLabel.style.transform = 'translateX(0)';
 
-        // Position final label aligned to right edge of bar (100%), but not overflow container
+        // === Position final label ===
         const finalLabelWidth = finalLabel.offsetWidth;
         let finalLeft = barRect.right - containerRect.left - finalLabelWidth;
         if (finalLeft < 0) finalLeft = 0;
@@ -195,52 +187,52 @@
         finalLabel.style.left = `${finalLeft}px`;
         finalLabel.style.transform = 'translateX(0)';
 
-        // Lines removed as per your last instruction
-        // But if you want to debug the lines, you can call drawIndicatorLines(initialLabel, finalLabel) here
-        // drawIndicatorLines(initialLabel, finalLabel);
+        // Remove old indicator lines if any
+        const oldLines = labelsContainer.querySelectorAll('.indicator-line');
+        oldLines.forEach(line => line.remove());
+
+        // Draw angled indicator lines
+        drawAngledIndicatorLine(initialLabel, (INITIAL_GOAL / FINAL_GOAL) * barRect.width);
+        drawAngledIndicatorLine(finalLabel, barRect.width);
       });
     }
 
-    // Debug function to draw vertical lines (currently unused)
-    function drawIndicatorLines(initialLabel, finalLabel) {
-      const oldLines = labelsContainer.querySelectorAll('.indicator-line');
-      oldLines.forEach(line => line.remove());
-
+    function drawAngledIndicatorLine(label, barXOffset) {
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
+      const labelRect = label.getBoundingClientRect();
 
-      [initialLabel, finalLabel].forEach(label => {
-        const labelRect = label.getBoundingClientRect();
+      // Positions relative to container
+      const barLeftRelative = barRect.left - containerRect.left;
+      const barX = barLeftRelative + barXOffset;
 
-        let percent = (label === initialLabel) ? INITIAL_GOAL / FINAL_GOAL : 1;
-        const markerX = percent * barRect.width + barRect.left - containerRect.left;
+      // Label bottom center point relative to container
+      const labelCenterX = labelRect.left - containerRect.left + labelRect.width / 2;
+      const labelBottomY = labelRect.bottom - containerRect.top;
 
-        const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
-        const labelBottomY = labelRect.bottom - containerRect.top;
-        const barTopY = barRect.top - containerRect.top;
+      // Bar top edge y relative to container
+      const barTopY = barRect.top - containerRect.top;
 
-        const lineHeight = labelBottomY - barTopY;
+      // Calculate horizontal and vertical distance between points
+      const deltaX = labelCenterX - barX;
+      const deltaY = labelBottomY - barTopY;
 
-        console.log('Drawing line for label:', label.textContent);
-        console.log('labelCenterX:', labelCenterX, 'markerX:', markerX, 'lineHeight:', lineHeight, 'barTopY:', barTopY, 'labelBottomY:', labelBottomY);
+      // Calculate length and angle for line
+      const length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const angleRad = Math.atan2(deltaY, deltaX);
+      const angleDeg = angleRad * (180 / Math.PI);
 
-        if(lineHeight <= 0) {
-          console.warn('Skipping line with non-positive height');
-          return;
-        }
+      // Create line div
+      const line = document.createElement('div');
+      line.className = 'indicator-line';
 
-        const line = document.createElement('div');
-        line.className = 'indicator-line';
+      // Position line at bar point
+      line.style.top = `${barTopY}px`;
+      line.style.left = `${barX}px`;
+      line.style.width = `${length}px`;
+      line.style.transform = `rotate(${angleDeg}deg)`;
 
-        line.style.top = barTopY + 'px';
-
-        // Position line under label center for now
-        line.style.left = (labelCenterX - 2) + 'px'; // 4px width, center it
-
-        line.style.height = lineHeight + 'px';
-
-        labelsContainer.appendChild(line);
-      });
+      labelsContainer.appendChild(line);
     }
   </script>
 </body>
