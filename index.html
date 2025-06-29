@@ -1,5 +1,3 @@
-this is the version I liked
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +5,15 @@ this is the version I liked
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fundraising Progress</title>
 <style>
+  @font-face {
+    font-family: 'OtakiVegeBags';
+    src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
   body {
-    font-family: sans-serif;
+    font-family: 'OtakiVegeBags', sans-serif;
     margin: 0;
     padding: 2em;
   }
@@ -33,13 +38,11 @@ this is the version I liked
     bottom: 10px;
     white-space: nowrap;
     z-index: 20;
-    background: #fff;
-    padding: 2px 6px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    /* Removed bubble background and padding */
     font-size: 0.75rem;
     color: #000;
     line-height: 1.1;
+    font-family: 'OtakiVegeBags', sans-serif;
   }
 
   svg {
@@ -94,6 +97,7 @@ this is the version I liked
     font-weight: bold;
     border-radius: 8px 0 0 8px;
     box-sizing: border-box;
+    font-family: 'OtakiVegeBags', sans-serif;
   }
 
   .progress-text {
@@ -103,6 +107,7 @@ this is the version I liked
     word-wrap: break-word;
     position: relative;
     z-index: 10;
+    font-family: 'OtakiVegeBags', sans-serif;
   }
 
   @media (max-width: 500px) {
@@ -111,7 +116,6 @@ this is the version I liked
     }
     .label-wrapper {
       font-size: 0.65rem;
-      padding: 1px 4px;
     }
   }
 </style>
@@ -205,11 +209,10 @@ this is the version I liked
       const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
       // Initial goal line: convex down curve (smiley) bending below straight line
-      // Control points placed below the line from label to marker but above progress bar
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
 
-      // Place control points about 12px BELOW the straight line connecting label bottom to marker (targetY)
+      // Control points about 12px BELOW the straight line connecting label bottom to marker (targetY)
       // But keep at least 6px ABOVE progress bar top (targetY)
       const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
       const initCtrlYOffset = 12;
@@ -224,13 +227,8 @@ this is the version I liked
       svg.appendChild(pathInit);
 
       // Final goal line: concave up curve (sad face) bending above straight line
-      // Control points placed above the line from label bottom to marker but well clear of label bottom
-
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
-
-      // We want control points to be ~12px above straight line between label bottom and targetY,
-      // but at least 6px above label bottom so it doesn't cross or overlap label
 
       const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
       const finalCtrlYOffset = 12;
@@ -274,19 +272,26 @@ this is the version I liked
           labelsContainer.appendChild(initialLabel);
           labelsContainer.appendChild(finalLabel);
 
+          // Adjust label positions for no overlap and clamping
           adjustLabels(initialLabel, finalLabel);
+
+          // Draw curved indicator lines
           drawIndicatorLines(initialLabel, finalLabel);
         })
-        .catch(err => {
-          console.error(err);
-          barFill.textContent = 'Error loading';
+        .catch(() => {
+          barFill.textContent = 'Error loading data';
           progressLine1.textContent = '';
           progressLine2.textContent = '';
+          labelsContainer.innerHTML = '';
+          labelsContainer.appendChild(svg);
         });
     }
 
     window.addEventListener('resize', update);
+
     update();
+    // Optionally refresh every 10 seconds or so
+    setInterval(update, 10000);
   </script>
 </body>
 </html>
