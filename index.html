@@ -45,29 +45,21 @@
       text-align: left;
     }
 
-    .marker-label {
-      position: absolute;
-      top: -1.7em;
-      font-size: 0.75rem;
-      white-space: nowrap;
-    }
-
-    .marker-left .marker-label {
-      left: -10px;
-      transform: translateX(-100%);
-    }
-
-    .marker-right .marker-label {
-      right: -10px;
-      transform: translateX(100%);
-    }
-
-    .goal-annotation {
+    .goal-label {
       position: absolute;
       font-size: 0.75rem;
-      top: -2.5em;
+      top: -1.8em;
       transform: translateX(-50%);
       white-space: nowrap;
+      color: #000;
+    }
+
+    .marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #000;
     }
   </style>
 </head>
@@ -104,29 +96,40 @@
         const remainingLine = `$${remaining.toLocaleString()} remaining to meet our final $12,000 goal!`;
         summary.innerHTML = `${raisedLine}<br>${remainingLine}`;
 
-        // Add visual goal markers
+        // Add goal marker lines and labels
         const markerContainer = document.createElement('div');
         markerContainer.style.position = 'absolute';
-        markerContainer.style.top = 0;
-        markerContainer.style.left = 0;
-        markerContainer.style.height = '100%';
+        markerContainer.style.top = '0';
+        markerContainer.style.left = '0';
         markerContainer.style.width = '100%';
+        markerContainer.style.height = '100%';
+        markerContainer.style.pointerEvents = 'none';
 
-        const addMarker = (leftPercent, label, annotationText) => {
+        const addGoalMarker = (percent, labelText) => {
           const marker = document.createElement('div');
-          marker.style.position = 'absolute';
-          marker.style.left = `${leftPercent}%`;
-          marker.style.top = 0;
-          marker.style.bottom = 0;
-          marker.style.width = '2px';
-          marker.style.background = '#000';
+          marker.className = 'marker';
+          marker.style.left = `${percent}%`;
 
-          // Small tag at bar line
-          const tag = document.createElement('div');
-          tag.className = 'marker-label';
-          tag.textContent = label;
-          tag.style.left = '50%';
-          tag.style.transform = 'translateX(-50%)';
-          marker.appendChild(tag);
+          const label = document.createElement('div');
+          label.className = 'goal-label';
+          label.textContent = labelText;
+          label.style.left = `${percent}%`;
 
-          // Larger annotation abov
+          markerContainer.appendChild(marker);
+          markerContainer.appendChild(label);
+        };
+
+        addGoalMarker((goal / stretchGoal) * 100, '$10,000 initial goal');
+        addGoalMarker(100, '$12,000 final goal');
+
+        barBg.appendChild(markerContainer);
+      } catch (error) {
+        console.error("Error fetching progress:", error);
+        document.getElementById('summary').textContent = "Error loading progress data.";
+      }
+    }
+
+    fetchProgress();
+  </script>
+</body>
+</html>
