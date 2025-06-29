@@ -19,7 +19,7 @@
 
     .label-row {
       position: relative;
-      height: 3em;
+      height: 4em;
       margin-bottom: 0.25em;
     }
 
@@ -45,7 +45,7 @@
 
     .label-line {
       width: 1px;
-      height: 12px; /* Ensure line touches top of bar */
+      height: 12px;
       background: #000;
     }
 
@@ -62,7 +62,7 @@
       left: 0;
       top: 0;
       height: 100%;
-      background-color: #fff9c4; /* light yellow */
+      background-color: #fff9c4;
       z-index: 1;
       border-radius: 8px 0 0 8px;
     }
@@ -107,7 +107,6 @@
 
   <script>
     const barFill = document.getElementById('bar-fill');
-    const barBg = document.getElementById('bar-bg');
     const barInitialBg = document.getElementById('bar-initial-bg');
     const labelRow = document.getElementById('label-row');
     const progressLine1 = document.getElementById('progress-line1');
@@ -135,8 +134,18 @@
         progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
         progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
-        addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`);
+        const positions = [
+          { percent: (INITIAL_GOAL / FINAL_GOAL) * 100, text: `initial goal $${INITIAL_GOAL.toLocaleString()}` },
+          { percent: 100, text: `final goal $${FINAL_GOAL.toLocaleString()}` }
+        ];
+
+        // Auto-stagger if labels too close
+        if (Math.abs(positions[0].percent - positions[1].percent) < 10) {
+          addLabel(labelRow, positions[0].percent, positions[0].text, true);  // staggered
+          addLabel(labelRow, positions[1].percent, positions[1].text, false); // normal
+        } else {
+          positions.forEach(pos => addLabel(labelRow, pos.percent, pos.text));
+        }
       })
       .catch(err => {
         console.error(err);
@@ -145,10 +154,13 @@
         progressLine2.textContent = '';
       });
 
-    function addLabel(container, percent, text) {
+    function addLabel(container, percent, text, stagger = false) {
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
       wrapper.style.left = `${percent}%`;
+      if (stagger) {
+        wrapper.style.bottom = '0.75em'; // slightly higher
+      }
 
       const label = document.createElement('div');
       label.className = 'goal-label';
