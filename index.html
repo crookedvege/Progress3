@@ -50,17 +50,16 @@
       top: -1.5em;
       font-size: 0.75rem;
       white-space: nowrap;
-      transform: translateX(-50%);
     }
 
     .marker-left .marker-label {
-      transform: translateX(-100%);
       left: 0;
+      transform: translateX(-10%);
     }
 
     .marker-right .marker-label {
-      transform: translateX(0%);
-      left: 0;
+      right: 0;
+      transform: translateX(10%);
     }
   </style>
 </head>
@@ -85,4 +84,39 @@
         const barText = document.getElementById('bar-text');
         const summary = document.getElementById('summary');
 
-        const percentOfStretch = Math.min((total / stretchGoal
+        const percentOfStretch = Math.min((total / stretchGoal) * 100, 100);
+        const percentOfMain = Math.min((total / goal) * 100, 100);
+        const remaining = Math.max(stretchGoal - total, 0);
+
+        // Update bar fill
+        barFill.style.width = `${percentOfStretch}%`;
+
+        // Update label
+        const displayPercent = total >= goal ? percentOfStretch : percentOfMain;
+        barText.textContent = `${displayPercent.toFixed(1)}%`;
+
+        // Update summary text
+        const raisedText = `$${total.toLocaleString()} raised of initial $10,000 goal!`;
+        const remainingText = `$${remaining.toLocaleString()} remaining to meet our final $12,000 goal!`;
+        summary.textContent = `${raisedText} ${remainingText}`;
+
+        // Add goal markers
+        const barBg = document.querySelector('.bar-bg');
+        const markerContainer = document.createElement('div');
+        markerContainer.style.position = 'absolute';
+        markerContainer.style.top = 0;
+        markerContainer.style.left = 0;
+        markerContainer.style.height = '100%';
+        markerContainer.style.width = '100%';
+
+        const addMarker = (leftPercent, label, positionClass) => {
+          const marker = document.createElement('div');
+          marker.style.position = 'absolute';
+          marker.style.left = `${leftPercent}%`;
+          marker.style.top = 0;
+          marker.style.bottom = 0;
+          marker.style.width = '2px';
+          marker.style.background = '#000';
+          marker.classList.add(`marker-${positionClass}`);
+
+          c
