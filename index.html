@@ -19,7 +19,7 @@
 
     .label-row {
       position: relative;
-      height: 4em;
+      height: 5em;
       margin-bottom: 0.25em;
     }
 
@@ -29,7 +29,6 @@
       flex-direction: column;
       align-items: center;
       transform: translateX(-50%);
-      bottom: 0;
     }
 
     .goal-label {
@@ -44,9 +43,10 @@
     }
 
     .label-line {
-      width: 1px;
-      height: 12px;
+      width: 2px;
+      height: 30px;
       background: #000;
+      transform-origin: top center;
     }
 
     .bar-bg {
@@ -134,18 +134,8 @@
         progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
         progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        const positions = [
-          { percent: (INITIAL_GOAL / FINAL_GOAL) * 100, text: `initial goal $${INITIAL_GOAL.toLocaleString()}` },
-          { percent: 100, text: `final goal $${FINAL_GOAL.toLocaleString()}` }
-        ];
-
-        // Auto-stagger if labels too close
-        if (Math.abs(positions[0].percent - positions[1].percent) < 10) {
-          addLabel(labelRow, positions[0].percent, positions[0].text, true);  // staggered
-          addLabel(labelRow, positions[1].percent, positions[1].text, false); // normal
-        } else {
-          positions.forEach(pos => addLabel(labelRow, pos.percent, pos.text));
-        }
+        addAngledLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`, -20);
+        addAngledLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`, 20);
       })
       .catch(err => {
         console.error(err);
@@ -154,13 +144,10 @@
         progressLine2.textContent = '';
       });
 
-    function addLabel(container, percent, text, stagger = false) {
+    function addAngledLabel(container, percent, text, horizontalOffset) {
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
-      wrapper.style.left = `${percent}%`;
-      if (stagger) {
-        wrapper.style.bottom = '0.75em'; // slightly higher
-      }
+      wrapper.style.left = `calc(${percent}% + ${horizontalOffset}px)`;
 
       const label = document.createElement('div');
       label.className = 'goal-label';
@@ -168,6 +155,9 @@
 
       const line = document.createElement('div');
       line.className = 'label-line';
+
+      const angleDegrees = Math.atan2(30, horizontalOffset) * (180 / Math.PI);
+      line.style.transform = `rotate(${horizontalOffset < 0 ? -angleDegrees : angleDegrees}deg)`;
 
       wrapper.appendChild(label);
       wrapper.appendChild(line);
