@@ -17,6 +17,37 @@
       margin: auto;
     }
 
+    .label-row {
+      position: relative;
+      height: 3.2em;
+      margin-bottom: 0.25em;
+    }
+
+    .label-wrapper {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translateX(-50%);
+    }
+
+    .goal-label {
+      font-size: 0.75rem;
+      color: #000;
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      white-space: nowrap;
+    }
+
+    .label-line {
+      width: 2px;
+      height: 12px;
+      background: #000;
+      margin-top: 2px;
+    }
+
     .bar-bg {
       position: relative;
       background: #ddd;
@@ -52,33 +83,6 @@
       box-sizing: border-box;
     }
 
-    .label-wrapper {
-      position: absolute;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      top: -2.8em;
-      transform: translateX(-50%);
-      z-index: 4;
-    }
-
-    .goal-label {
-      font-size: 0.75rem;
-      color: #000;
-      background: #fff;
-      padding: 2px 6px;
-      border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      white-space: nowrap;
-    }
-
-    .label-line {
-      width: 2px;
-      height: 12px;
-      background: #000;
-      margin-top: 2px;
-    }
-
     .progress-text {
       margin-top: 1em;
       font-size: 1rem;
@@ -89,10 +93,13 @@
 </head>
 <body>
   <div id="progress-container">
+    <div class="label-row" id="label-row"></div>
+
     <div class="bar-bg" id="bar-bg">
       <div class="bar-initial-bg" id="bar-initial-bg"></div>
       <div class="bar-fill" id="bar-fill">Loading…</div>
     </div>
+
     <div class="progress-text" id="progress-line1">Loading…</div>
     <div class="progress-text" id="progress-line2"></div>
   </div>
@@ -101,6 +108,7 @@
     const barFill = document.getElementById('bar-fill');
     const barBg = document.getElementById('bar-bg');
     const barInitialBg = document.getElementById('bar-initial-bg');
+    const labelRow = document.getElementById('label-row');
     const progressLine1 = document.getElementById('progress-line1');
     const progressLine2 = document.getElementById('progress-line2');
 
@@ -126,8 +134,8 @@
         progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
         progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        addLabel((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
-        addLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
+        addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
+        addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`);
       })
       .catch(err => {
         console.error(err);
@@ -136,21 +144,21 @@
         progressLine2.textContent = '';
       });
 
-    function addLabel(percent, labelText) {
+    function addLabel(container, percent, text) {
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
       wrapper.style.left = `${percent}%`;
 
       const label = document.createElement('div');
       label.className = 'goal-label';
-      label.textContent = labelText;
+      label.textContent = text;
 
       const line = document.createElement('div');
       line.className = 'label-line';
 
       wrapper.appendChild(label);
       wrapper.appendChild(line);
-      barBg.appendChild(wrapper);
+      container.appendChild(wrapper);
     }
   </script>
 </body>
