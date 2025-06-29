@@ -5,12 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Fundraising Progress</title>
 <style>
-  @font-face {
-    font-family: 'OtakiVegeBags';
-    src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-  }
+  @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
 
   body {
     font-family: sans-serif;
@@ -38,9 +33,12 @@
     bottom: 10px;
     white-space: nowrap;
     z-index: 20;
-    font-family: 'OtakiVegeBags', sans-serif;
-    /* Removed bubble background and padding */
-    font-size: 0.75rem;
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-family: 'Permanent Marker', cursive;
+    font-size: 0.9375rem; /* 25% larger than 0.75rem */
     color: #000;
     line-height: 1.1;
   }
@@ -97,7 +95,6 @@
     font-weight: bold;
     border-radius: 8px 0 0 8px;
     box-sizing: border-box;
-    font-family: sans-serif; /* keep default */
   }
 
   .progress-text {
@@ -105,9 +102,10 @@
     font-size: 1rem;
     line-height: 1.4;
     word-wrap: break-word;
+    white-space: normal;  /* allow wrapping */
+    max-width: 100%;
     position: relative;
     z-index: 10;
-    font-family: sans-serif; /* keep default */
   }
 
   @media (max-width: 500px) {
@@ -115,7 +113,8 @@
       height: 4em;
     }
     .label-wrapper {
-      font-size: 0.65rem;
+      font-size: 0.78rem; /* 25% larger of 0.625 */
+      padding: 1px 4px;
     }
   }
 </style>
@@ -145,6 +144,7 @@
     const progressContainer = document.getElementById('progress-container');
     const barBg = document.getElementById('bar-bg');
 
+    // Create SVG once and reuse
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     labelsContainer.appendChild(svg);
 
@@ -193,7 +193,7 @@
       const barRect = barBg.getBoundingClientRect();
 
       const barTopY = barRect.top - containerRect.top;
-      const targetY = barTopY - 1;
+      const targetY = barTopY - 1; // 1px above bar top
 
       const initialLabelRect = initialLabel.getBoundingClientRect();
       const finalLabelRect = finalLabel.getBoundingClientRect();
@@ -207,12 +207,13 @@
       const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
       const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-      // Initial goal line: convex down (smiley)
+      // Initial goal line: convex down curve (smiley) bending below straight line
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
 
       const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
       const initCtrlYOffset = 12;
+      // Ensure control points stay above progress bar top (targetY)
       const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
 
       const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -223,12 +224,13 @@
       );
       svg.appendChild(pathInit);
 
-      // Final goal line: concave up (sad face)
+      // Final goal line: concave up curve (sad face) bending above straight line
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
 
       const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
       const finalCtrlYOffset = 12;
+      // Ensure control points stay above label bottom
       const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
 
       const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -245,11 +247,11 @@
         .then(res => res.json())
         .then(data => {
           const raised = data.total;
-          const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
-          const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
+          const percentInitial = Math.min(Math.round((raised / INITIAL_GOAL) * 100), 100);
+          const percentTotal = Math.min(Math.round((raised / FINAL_GOAL) * 100), 100);
 
           barFill.style.width = percentTotal + '%';
-          barFill.textContent = percentInitial.toFixed(1) + '% of initial goal';
+          barFill.textContent = percentInitial + '% of initial goal';
 
           const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
           barInitialBg.style.width = initialBgWidth + '%';
@@ -272,19 +274,16 @@
           adjustLabels(initialLabel, finalLabel);
           drawIndicatorLines(initialLabel, finalLabel);
         })
-        .catch(() => {
-          barFill.textContent = 'Error loading data';
+        .catch(err => {
+          console.error(err);
+          barFill.textContent = 'Error loading';
           progressLine1.textContent = '';
           progressLine2.textContent = '';
-          labelsContainer.innerHTML = '';
-          labelsContainer.appendChild(svg);
         });
     }
 
     window.addEventListener('resize', update);
-
     update();
-    setInterval(update, 10000);
   </script>
 </body>
 </html>
