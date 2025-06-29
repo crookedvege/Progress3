@@ -15,6 +15,7 @@
       width: 100%;
       max-width: 1000px;
       margin: auto;
+      position: relative;
     }
 
     .label-row {
@@ -28,6 +29,7 @@
       bottom: 0;
       white-space: nowrap;
       transform: translateX(-50%);
+      transition: left 0.3s ease;
     }
 
     .goal-label {
@@ -38,14 +40,7 @@
       border-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       line-height: 1.1;
-    }
-
-    /* Different horizontal offsets for labels to avoid overlap */
-    .left-label {
-      transform: translateX(calc(-50% - 30px));
-    }
-    .right-label {
-      transform: translateX(calc(-50% + 30px));
+      user-select: none;
     }
 
     @media (max-width: 500px) {
@@ -55,12 +50,6 @@
       .goal-label {
         font-size: 0.65rem;
         padding: 1px 4px;
-      }
-      .left-label {
-        transform: translateX(calc(-50% - 20px));
-      }
-      .right-label {
-        transform: translateX(calc(-50% + 20px));
       }
     }
 
@@ -126,6 +115,7 @@
     const labelRow = document.getElementById('label-row');
     const progressLine1 = document.getElementById('progress-line1');
     const progressLine2 = document.getElementById('progress-line2');
+    const progressContainer = document.getElementById('progress-container');
 
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
@@ -152,8 +142,12 @@
         // Clear previous labels
         labelRow.innerHTML = '';
 
-        addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`, 'left-label');
-        addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`, 'right-label');
+        // Add labels and store for adjustment
+        const initialLabel = addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
+        const finalLabel = addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`);
+
+        // After they render, adjust to prevent overlap and keep final label inside container
+        window.requestAnimationFrame(() => adjustLabels(initialLabel, finalLabel));
       })
       .catch(err => {
         console.error(err);
@@ -162,9 +156,9 @@
         progressLine2.textContent = '';
       });
 
-    function addLabel(container, percent, text, positionClass) {
+    function addLabel(container, percent, text) {
       const wrapper = document.createElement('div');
-      wrapper.className = `label-wrapper ${positionClass}`;
+      wrapper.className = 'label-wrapper';
       wrapper.style.left = `${percent}%`;
       wrapper.style.bottom = '0';
 
@@ -174,7 +168,58 @@
 
       wrapper.appendChild(label);
       container.appendChild(wrapper);
+
+      return wrapper;
     }
+
+    function adjustLabels(labelA, labelB) {
+      const containerRect = progressContainer.getBoundingClientRect();
+      const aRect = labelA.getBoundingClientRect();
+      const bRect = labelB.getBoundingClientRect();
+
+      // Compute desired center positions relative to container left
+      let aCenter = aRect.left + aRect.width / 2 - containerRect.left;
+      let bCenter = bRect.left + bRect.width / 2 - containerRect.left;
+
+      // Minimum horizontal spacing between labels (pixels)
+      const minSpacing = 8;
+
+      // Check overlap and adjust
+      if (bCenter - aCenter < (aRect.width / 2 + bRect.width / 2 + minSpacing)) {
+        // Overlap, so shift labels apart
+        const overlap = (aRect.width / 2 + bRect.width / 2 + minSpacing) - (bCenter - aCenter);
+
+        // Try shifting initial label left and final label right
+        let newALeft = aCenter - overlap / 2;
+        let newBLeft = bCenter + overlap / 2;
+
+        // Clamp newALeft not to go less than 0 (start of container)
+        newALeft = Math.max(newALeft, aRect.width / 2);
+
+        // Clamp newBLeft not to go beyond container width - half label width
+        newBLeft = Math.min(newBLeft, containerRect.width - bRect.width / 2);
+
+        // Set new left % for labels relative to container width
+        const newAPercent = (newALeft / containerRect.width) * 100;
+        const newBPercent = (newBLeft / containerRect.width) * 100;
+
+        labelA.style.left = `${newAPercent}%`;
+        labelB.style.left = `${newBPercent}%`;
+      } else {
+        // No overlap, ensure labels exactly at goal percent positions
+        const initialPercent = (INITIAL_GOAL / FINAL_GOAL) * 100;
+        labelA.style.left = `${initialPercent}%`;
+        labelB.style.left = `100%`;
+      }
+    }
+
+    // Recalculate on window resize (to keep labels from overlapping on responsive changes)
+    window.addEventListener('resize', () => {
+      const labelWrappers = labelRow.querySelectorAll('.label-wrapper');
+      if (labelWrappers.length === 2) {
+        adjustLabels(labelWrappers[0], labelWrappers[1]);
+      }
+    });
   </script>
 </body>
 </html>
