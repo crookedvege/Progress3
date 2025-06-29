@@ -18,7 +18,6 @@
     overflow: visible;
   }
 
-  /* Container for labels and indicator lines */
   #labels-container {
     position: relative;
     height: 3.5em;
@@ -29,7 +28,7 @@
 
   .label-wrapper {
     position: absolute;
-    bottom: 10px; /* distance above bar */
+    bottom: 10px;
     white-space: nowrap;
     z-index: 20;
     background: #fff;
@@ -203,29 +202,44 @@
       const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
       const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-      // Initial goal line control points — keep curve above bar, no dipping into it
+      // Initial goal line: convex down curve (smiley) bending below straight line
+      // Control points placed below the line from label to marker but above progress bar
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
 
-      const initCtrl1Y = Math.min(initialLabelBottomY + 10, targetY - 10);
-      const initCtrl2Y = Math.min(initialLabelBottomY + 15, targetY - 10);
+      // Place control points about 12px BELOW the straight line connecting label bottom to marker (targetY)
+      // But keep at least 6px ABOVE progress bar top (targetY)
+      const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
+      const initCtrlYOffset = 12;
+      const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
 
       const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pathInit.setAttribute('class', 'indicator-path');
-      pathInit.setAttribute('d', `M${initialLabelCenterX},${initialLabelBottomY} C${initCtrl1X},${initCtrl1Y} ${initCtrl2X},${initCtrl2Y} ${initialMarkerX},${targetY}`);
+      pathInit.setAttribute('d',
+        `M${initialLabelCenterX},${initialLabelBottomY} 
+         C${initCtrl1X},${initCtrlY} ${initCtrl2X},${initCtrlY} ${initialMarkerX},${targetY}`
+      );
       svg.appendChild(pathInit);
 
-      // Final goal line control points — keep curve below label and above bar
+      // Final goal line: concave up curve (sad face) bending above straight line
+      // Control points placed above the line from label bottom to marker but well clear of label bottom
+
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
 
-      const finalCtrlYClamped = Math.max(targetY + 10, finalLabelBottomY + 5);
-      const finalCtrl1Y = finalCtrlYClamped;
-      const finalCtrl2Y = finalCtrlYClamped;
+      // We want control points to be ~12px above straight line between label bottom and targetY,
+      // but at least 6px above label bottom so it doesn't cross or overlap label
+
+      const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
+      const finalCtrlYOffset = 12;
+      const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
 
       const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pathFinal.setAttribute('class', 'indicator-path');
-      pathFinal.setAttribute('d', `M${finalLabelCenterX},${finalLabelBottomY} C${finalCtrl1X},${finalCtrl1Y} ${finalCtrl2X},${finalCtrl2Y} ${finalMarkerX},${targetY}`);
+      pathFinal.setAttribute('d',
+        `M${finalLabelCenterX},${finalLabelBottomY} 
+         C${finalCtrl1X},${finalCtrlY} ${finalCtrl2X},${finalCtrlY} ${finalMarkerX},${targetY}`
+      );
       svg.appendChild(pathFinal);
     }
 
@@ -250,7 +264,7 @@
           progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
           labelsContainer.innerHTML = '';
-          labelsContainer.appendChild(svg); // re-append SVG since we cleared innerHTML
+          labelsContainer.appendChild(svg);
 
           const initialLabel = createLabel(initialBgWidth, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
           const finalLabel = createLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
@@ -270,7 +284,6 @@
     }
 
     window.addEventListener('resize', update);
-
     update();
   </script>
 </body>
