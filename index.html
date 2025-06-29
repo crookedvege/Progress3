@@ -156,7 +156,7 @@
       initialLeft = clamp(initialLeft, 0, containerRect.width - initialWidth);
       finalLeft = clamp(finalLeft, 0, containerRect.width - finalWidth);
 
-      const minGap = 100;
+      const minGap = 8;
 
       if (initialLeft + initialWidth + minGap > finalLeft) {
         initialLeft = clamp(initialLeft - (initialLeft + initialWidth + minGap - finalLeft), 0, containerRect.width - initialWidth);
