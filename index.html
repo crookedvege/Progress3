@@ -1,122 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fundraising Progress</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 2em;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fundraising Progress</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 2em;
+  }
 
-    #progress-container {
-      max-width: 1000px;
-      margin: auto;
-      position: relative;
-      overflow: visible;
-    }
+  #progress-container {
+    max-width: 1000px;
+    margin: auto;
+    position: relative;
+    overflow: visible;
+  }
 
+  /* Container for labels and SVG indicator lines */
+  #labels-container {
+    position: relative;
+    height: 3.5em;
+    margin-bottom: 0.5em;
+    overflow: visible;
+    user-select: none;
+  }
+
+  .label-wrapper {
+    position: absolute;
+    bottom: 10px; /* distance above bar */
+    white-space: nowrap;
+    z-index: 20;
+    background: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.75rem;
+    color: #000;
+    line-height: 1.1;
+  }
+
+  #indicator-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 15;
+  }
+
+  .indicator-path {
+    fill: none;
+    stroke: black;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  #bar-bg {
+    position: relative;
+    background: #ddd;
+    border-radius: 8px;
+    height: 24px;
+    overflow: hidden;
+    z-index: 5;
+  }
+
+  #bar-initial-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: #fff9c4;
+    z-index: 1;
+    border-radius: 8px 0 0 8px;
+  }
+
+  #bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: #f4c421;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    color: #000;
+    font-weight: bold;
+    border-radius: 8px 0 0 8px;
+    box-sizing: border-box;
+  }
+
+  .progress-text {
+    margin-top: 1em;
+    font-size: 1rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    position: relative;
+    z-index: 10;
+  }
+
+  @media (max-width: 500px) {
     #labels-container {
-      position: relative;
-      height: 3.5em;
-      margin-bottom: 0.5em;
-      overflow: visible;
-      user-select: none;
+      height: 4em;
     }
-
     .label-wrapper {
-      position: absolute;
-      bottom: 10px;
-      white-space: nowrap;
-      z-index: 20;
-      background: #fff;
-      padding: 2px 6px;
-      border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      font-size: 0.75rem;
-      color: #000;
-      line-height: 1.1;
+      font-size: 0.65rem;
+      padding: 1px 4px;
     }
-
-    svg.indicator-svg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .indicator-path {
-      stroke: black;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    #bar-bg {
-      position: relative;
-      background: #ddd;
-      border-radius: 8px;
-      height: 24px;
-      overflow: hidden;
-      z-index: 5;
-    }
-
-    #bar-initial-bg {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      background-color: #fff9c4;
-      z-index: 1;
-      border-radius: 8px 0 0 8px;
-    }
-
-    #bar-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      background: #f4c421;
-      z-index: 3;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding-right: 6px;
-      color: #000;
-      font-weight: bold;
-      border-radius: 8px 0 0 8px;
-      box-sizing: border-box;
-    }
-
-    .progress-text {
-      margin-top: 1em;
-      font-size: 1rem;
-      line-height: 1.4;
-      word-wrap: break-word;
-      position: relative;
-      z-index: 10;
-    }
-
-    @media (max-width: 500px) {
-      #labels-container {
-        height: 4em;
-      }
-
-      .label-wrapper {
-        font-size: 0.65rem;
-        padding: 1px 4px;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <div id="progress-container">
     <div id="labels-container">
-      <svg class="indicator-svg"></svg>
+      <svg id="indicator-svg" aria-hidden="true"></svg>
     </div>
 
     <div id="bar-bg">
@@ -139,7 +141,7 @@
     const progressLine2 = document.getElementById('progress-line2');
     const progressContainer = document.getElementById('progress-container');
     const barBg = document.getElementById('bar-bg');
-    const svg = labelsContainer.querySelector('svg');
+    const svg = document.getElementById('indicator-svg');
 
     function createLabel(percent, text) {
       const wrapper = document.createElement('div');
@@ -195,13 +197,14 @@
         const labelBottomY = labelRect.bottom - containerRect.top;
 
         const barTopY = barRect.top - containerRect.top;
-        const targetY = barTopY - 1; // 1px above the bar
+        const targetY = barTopY - 1; // 1px above bar
 
-        // For initial goal line: curve bends UP (concave up) => control point BELOW line points
-        // For final goal line: curve bends DOWN (concave down) => control point ABOVE line points
+        const controlYOffset = 10;
+
+        // Control Y position bends opposite ways for initial vs final
         const controlY = (label === initialLabel)
-          ? Math.max(labelBottomY, targetY) + 30 // 30px below for upward curve
-          : Math.min(labelBottomY, targetY) - 30; // 30px above for downward curve
+          ? Math.max(labelBottomY, targetY) + controlYOffset  // curve "down" for initial
+          : Math.min(labelBottomY, targetY) - controlYOffset; // curve "up" for final
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', `M ${labelCenterX},${labelBottomY} Q ${(labelCenterX + markerX) / 2},${controlY} ${markerX},${targetY}`);
@@ -230,7 +233,8 @@
           progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
           progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-          labelsContainer.querySelectorAll('.label-wrapper').forEach(el => el.remove());
+          labelsContainer.innerHTML = '';
+          labelsContainer.appendChild(svg); // re-attach SVG
 
           const initialLabel = createLabel(initialBgWidth, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
           const finalLabel = createLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
@@ -250,6 +254,7 @@
     }
 
     window.addEventListener('resize', update);
+
     update();
   </script>
 </body>
