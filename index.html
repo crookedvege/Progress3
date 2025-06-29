@@ -81,7 +81,15 @@
       margin-top: 0.5em;
       font-size: 1rem;
       line-height: 1.3;
-      white-space: pre-line; /* allow multiline text */
+      /* removed white-space property to allow natural wrapping */
+    }
+
+    /* Separate lines for progress text */
+    #progress-line1, #progress-line2 {
+      max-width: 100%;
+      word-wrap: break-word;
+      /* optionally add spacing between lines */
+      margin-bottom: 0.25em;
     }
   </style>
 </head>
@@ -91,16 +99,17 @@
       <div class="bar-initial-bg" id="bar-initial-bg"></div>
       <div class="bar-fill" id="bar-fill">Loading…</div>
     </div>
-    <div class="progress-text" id="progress-text">Loading…</div>
-    <div class="progress-text" id="stretch-text"></div>
+    <!-- split progress text into two lines -->
+    <div class="progress-text" id="progress-line1">Loading…</div>
+    <div class="progress-text" id="progress-line2"></div>
   </div>
 
   <script>
     const barFill = document.getElementById('bar-fill');
     const barBg = document.getElementById('bar-bg');
     const barInitialBg = document.getElementById('bar-initial-bg');
-    const progressText = document.getElementById('progress-text');
-    const stretchText = document.getElementById('stretch-text');
+    const progressLine1 = document.getElementById('progress-line1');
+    const progressLine2 = document.getElementById('progress-line2');
 
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
@@ -121,12 +130,8 @@
         const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
         const remainingFinal = Math.max(0, FINAL_GOAL - raised);
 
-        progressText.textContent = `$${raised.toLocaleString()} raised!\n` +
-          `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, ` +
-          `and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
-
-        // We'll clear stretchText since all info is in progressText now
-        stretchText.textContent = '';
+        progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
+        progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
         addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
         addMarker(100, `final goal $${FINAL_GOAL.toLocaleString()}`, true);
@@ -134,8 +139,8 @@
       .catch(err => {
         console.error(err);
         barFill.textContent = 'Error loading';
-        progressText.textContent = '';
-        stretchText.textContent = '';
+        progressLine1.textContent = '';
+        progressLine2.textContent = '';
       });
 
     function addMarker(percent, labelText, isFinal = false) {
