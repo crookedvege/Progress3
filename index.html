@@ -62,7 +62,7 @@
 
     .goal-label {
       position: absolute;
-      top: -1.5em;
+      top: -1.5em; /* Above the bar */
       transform: translateX(-50%);
       font-size: 0.75rem;
       color: #000;
@@ -74,15 +74,9 @@
       transform: translateX(-100%);
     }
 
-    .goal-label.end-inside {
-      top: 0.25em;
-      right: 8px;
-      left: auto;
-      transform: none;
-      font-size: 0.75rem;
-      color: #000;
-      position: absolute;
-      z-index: 3;
+    .goal-label.final {
+      top: -1.5em;
+      transform: translateX(-100%); /* align final goal right edge */
     }
 
     .progress-text {
@@ -96,7 +90,6 @@
     <div class="bar-bg" id="bar-bg">
       <div class="bar-initial-bg" id="bar-initial-bg"></div>
       <div class="bar-fill" id="bar-fill">Loading…</div>
-      <div class="goal-label end-inside" id="final-label">$12,000 final goal</div>
     </div>
     <div class="progress-text" id="progress-text">Loading…</div>
     <div class="progress-text" id="stretch-text"></div>
@@ -112,7 +105,6 @@
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
 
-    // Use the actual Netlify function name
     fetch('/.netlify/functions/getProgress')
       .then(res => res.json())
       .then(data => {
@@ -124,7 +116,7 @@
         barFill.style.width = `${percentTotal}%`;
         barFill.textContent = `${percentInitial.toFixed(1)}% of initial goal`;
 
-        // Off-white background for initial goal
+        // Initial goal range background
         const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
         barInitialBg.style.width = `${initialBgWidth}%`;
 
@@ -134,8 +126,11 @@
         const remaining = Math.max(0, FINAL_GOAL - raised);
         stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        // Markers
-        addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `$${INITIAL_GOAL.toLocaleString()} initial goal`);
+        // Add marker and label for initial goal
+        addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
+
+        // Add marker and label for final goal
+        addMarker(100, `final goal $${FINAL_GOAL.toLocaleString()}`, true);
       })
       .catch(err => {
         console.error(err);
@@ -143,13 +138,14 @@
         progressText.textContent = '';
       });
 
-    function addMarker(percent, labelText) {
+    function addMarker(percent, labelText, isFinal = false) {
       const marker = document.createElement('div');
       marker.className = 'marker';
       marker.style.left = `${percent}%`;
 
       const label = document.createElement('div');
       label.className = 'goal-label';
+      if (isFinal) label.classList.add('final');
       label.textContent = labelText;
       label.style.left = `${percent}%`;
 
