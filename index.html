@@ -108,11 +108,10 @@
       font-size: 1rem;
       line-height: 1.4;
       word-wrap: break-word;
-      white-space: normal; /* ALLOW WRAPPING */
+      white-space: normal;
       overflow-wrap: break-word;
       max-width: 100%;
       color: #000;
-      /* Remove any height or overflow restrictions */
     }
 
     @media (max-width: 500px) {
@@ -242,8 +241,9 @@
       svg.appendChild(pathFinal);
     }
 
+    // Original update function fetches data and updates the UI
     function update() {
-      fetch('/.netlify/functions/getProgress')
+      return fetch('/.netlify/functions/getProgress')
         .then(res => res.json())
         .then(data => {
           const raised = data.total;
@@ -282,8 +282,29 @@
         });
     }
 
-    window.addEventListener('resize', update);
-    update();
+    // Send height to parent (Squarespace) for iframe resizing
+    function sendHeight() {
+      const height = document.body.scrollHeight;
+      window.parent.postMessage({ type: 'resize-iframe', height: height }, '*');
+    }
+
+    // Wrap update + sendHeight so height is updated after data changes
+    function updateAndNotify() {
+      update().finally(() => {
+        // Delay to ensure DOM updates are rendered
+        setTimeout(sendHeight, 100);
+      });
+    }
+
+    window.addEventListener('load', () => {
+      updateAndNotify();
+      sendHeight();
+    });
+
+    window.addEventListener('resize', () => {
+      updateAndNotify();
+      sendHeight();
+    });
   </script>
 </body>
 </html>
