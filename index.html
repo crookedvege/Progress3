@@ -100,7 +100,7 @@
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
 
-    fetch('/.netlify/functions/getprogress')
+    fetch('/.netlify/functions/getProgress')
       .then(res => res.json())
       .then(data => {
         const raised = data.total;
