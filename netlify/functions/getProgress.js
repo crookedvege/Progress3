@@ -22,12 +22,16 @@ exports.handler = async function () {
 
     return {
   statusCode: 200,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json'
+  },
   body: JSON.stringify({
-    progress: total / goal,
-    goal,
-    total,
-    stretchGoal: 12000 // <-- updated
-  }),
+    progress: data.fields?.Progress ?? null,
+    goal: data.fields?.Goal ?? null,
+    total: data.fields?.["Donation Value Rollup (from Table 1)"] ?? null,
+    stretchGoal: 12000
+  })
 };
 
   } catch (error) {
