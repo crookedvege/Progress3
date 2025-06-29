@@ -232,4 +232,61 @@
       }
 
       const initialPercent = (initialLeftPx / containerRect.width) * 100;
-      const finalPercent
+      const finalPercent = (finalLeftPx / containerRect.width) * 100;
+
+      initialWrapper.style.left = `${initialPercent}%`;
+      finalWrapper.style.left = `${finalPercent}%`;
+    }
+
+    function updateIndicatorLines(initialWrapper, finalWrapper) {
+      // Remove old lines if any
+      const oldLines = labelRow.querySelectorAll('.indicator-line');
+      oldLines.forEach(line => line.remove());
+
+      const containerRect = progressContainer.getBoundingClientRect();
+      const barRect = barBg.getBoundingClientRect();
+
+      [initialWrapper, finalWrapper].forEach(wrapper => {
+        const label = wrapper.querySelector('.goal-label');
+        const labelRect = label.getBoundingClientRect();
+
+        // Calculate center bottom point of label relative to container
+        const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
+        const labelBottomY = labelRect.bottom - containerRect.top;
+
+        // Calculate top center of bar at corresponding x position
+        // We get the percent from wrapper's left relative to container, then calc bar x
+        const wrapperLeftPercent = parseFloat(wrapper.style.left);
+        const barX = (wrapperLeftPercent / 100) * barRect.width;
+
+        // bar top relative to container
+        const barTopY = barRect.top - containerRect.top;
+
+        // Create line div
+        const line = document.createElement('div');
+        line.className = 'indicator-line';
+
+        // Calculate height and position
+        const lineHeight = labelBottomY - barTopY;
+        line.style.height = `${lineHeight}px`;
+
+        // Place line horizontally at label center x (align with label bottom center)
+        line.style.left = `${labelCenterX}px`;
+        // Place line vertically from bar top to label bottom (line's top at barTopY)
+        line.style.top = `${barTopY}px`;
+
+        labelRow.appendChild(line);
+      });
+    }
+
+    // Update label positions and indicator lines on window resize
+    window.addEventListener('resize', () => {
+      const wrappers = labelRow.querySelectorAll('.label-wrapper');
+      if (wrappers.length === 2) {
+        fixLabelPositions(wrappers[0], wrappers[1]);
+        updateIndicatorLines(wrappers[0], wrappers[1]);
+      }
+    });
+  </script>
+</body>
+</html>
