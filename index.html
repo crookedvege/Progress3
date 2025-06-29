@@ -18,11 +18,11 @@
     }
 
     .bar-bg {
-      position: relative;
+      position: relative; /* important for absolute children */
       background: #ddd;
       border-radius: 8px;
       height: 24px;
-      overflow: hidden;
+      overflow: visible; /* allow labels above to be visible */
     }
 
     .bar-initial-bg {
@@ -68,10 +68,14 @@
       color: #000;
       white-space: nowrap;
       z-index: 3;
+      pointer-events: none;
     }
 
     .goal-label.final {
       transform: translateX(-100%);
+      text-align: right;
+      max-width: 150px;
+      white-space: nowrap;
     }
 
     .progress-text {
