@@ -40,15 +40,22 @@
     line-height: 1.1;
   }
 
-  .indicator-line {
+  svg {
     position: absolute;
-    height: 2px;
-    background: linear-gradient(to right, #333, #000);
-    border-radius: 1px;
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.4);
-    z-index: 15;
-    transform: translate3d(0, 0, 0);
-    will-change: transform;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  path.connector {
+    fill: none;
+    stroke: #333;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     opacity: 0;
     animation: fadeInLine 0.4s ease-out forwards;
   }
@@ -118,6 +125,7 @@
 <body>
   <div id="progress-container">
     <div id="labels-container"></div>
+    <svg id="indicator-lines"></svg>
 
     <div id="bar-bg">
       <div id="bar-initial-bg"></div>
@@ -135,6 +143,7 @@
     const barFill = document.getElementById('bar-fill');
     const barInitialBg = document.getElementById('bar-initial-bg');
     const labelsContainer = document.getElementById('labels-container');
+    const svg = document.getElementById('indicator-lines');
     const progressLine1 = document.getElementById('progress-line1');
     const progressLine2 = document.getElementById('progress-line2');
     const progressContainer = document.getElementById('progress-container');
@@ -178,38 +187,35 @@
       finalLabel.style.left = (finalLeft / containerRect.width) * 100 + '%';
     }
 
+    function drawSVGCurve(fromX, fromY, toX, toY) {
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const curveX = fromX + dx * 0.5;
+      const curveY = fromY + dy * 0.2;
+      return `M${fromX},${fromY} Q${curveX},${curveY} ${toX},${toY}`;
+    }
+
     function drawIndicatorLines(initialLabel, finalLabel) {
-      const oldLines = labelsContainer.querySelectorAll('.indicator-line');
-      oldLines.forEach(line => line.remove());
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
 
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
 
-      [initialLabel, finalLabel].forEach(label => {
+      [initialLabel, finalLabel].forEach((label, index) => {
         const labelRect = label.getBoundingClientRect();
 
-        let percent = (label === initialLabel) ? INITIAL_GOAL / FINAL_GOAL : 1;
+        const percent = (index === 0) ? INITIAL_GOAL / FINAL_GOAL : 1;
         const markerX = percent * barRect.width + barRect.left - containerRect.left;
 
         const labelCenterX = labelRect.left + labelRect.width / 2 - containerRect.left;
         const labelBottomY = labelRect.bottom - containerRect.top;
         const barTopY = barRect.top - containerRect.top;
 
-        const line = document.createElement('div');
-        line.className = 'indicator-line';
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute('d', drawSVGCurve(labelCenterX, labelBottomY, markerX, barTopY));
+        path.classList.add('connector');
 
-        const dx = markerX - labelCenterX;
-        const dy = barTopY - labelBottomY;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-        line.style.width = length + 'px';
-        line.style.left = labelCenterX + 'px';
-        line.style.top = labelBottomY + 'px';
-        line.style.transformOrigin = '0 0';
-        line.style.transform = `rotate(${angle}deg)`;
-
-        labelsContainer.appendChild(line);
+        svg.appendChild(path);
       });
     }
 
