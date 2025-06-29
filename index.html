@@ -43,7 +43,7 @@
       padding: 6px 12px;
       border-radius: 999px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      font-size: 1.0125rem;
+      font-size: 1.35rem; /* 35% larger */
       color: #000;
       line-height: 1.2;
       font-family: 'OtakiVegeBags', sans-serif;
@@ -119,7 +119,7 @@
       }
 
       .label-wrapper {
-        font-size: 0.85rem;
+        font-size: 1rem;
         padding: 5px 10px;
       }
 
@@ -215,9 +215,7 @@
 
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
-      const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
-      const initCtrlYOffset = 12;
-      const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
+      const initCtrlY = Math.min((initialLabelBottomY + targetY) / 2 + 12, targetY - 6);
 
       const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pathInit.setAttribute('class', 'indicator-path');
@@ -229,9 +227,7 @@
 
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
-      const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
-      const finalCtrlYOffset = 12;
-      const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
+      const finalCtrlY = Math.max((finalLabelBottomY + targetY) / 2 - 12, finalLabelBottomY + 6);
 
       const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pathFinal.setAttribute('class', 'indicator-path');
