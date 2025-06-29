@@ -20,8 +20,8 @@
 
     .label-row {
       position: relative;
-      height: 2em;
-      margin-bottom: 0.2em;
+      height: 2.5em; /* increased for spacing */
+      margin-bottom: 0.3em;
     }
 
     .label-wrapper {
@@ -30,6 +30,7 @@
       white-space: nowrap;
       transform: translateX(-50%);
       transition: left 0.3s ease;
+      user-select: none;
     }
 
     .goal-label {
@@ -40,12 +41,18 @@
       border-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       line-height: 1.1;
-      user-select: none;
+    }
+
+    .indicator-line {
+      position: absolute;
+      width: 2px;
+      background: #000;
+      /* height and left will be set dynamically */
     }
 
     @media (max-width: 500px) {
       .label-row {
-        height: 2.5em;
+        height: 3em;
       }
       .goal-label {
         font-size: 0.65rem;
@@ -116,6 +123,7 @@
     const progressLine1 = document.getElementById('progress-line1');
     const progressLine2 = document.getElementById('progress-line2');
     const progressContainer = document.getElementById('progress-container');
+    const barBg = document.getElementById('bar-bg');
 
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
@@ -146,6 +154,7 @@
 
         setTimeout(() => {
           fixLabelPositions(initialLabel, finalLabel);
+          updateIndicatorLines(initialLabel, finalLabel);
         }, 100);
       })
       .catch(err => {
@@ -195,11 +204,6 @@
       let initialLeftPx = initialMarkerX - containerRect.left; // relative to container left edge
       let finalLeftPx = finalMarkerX - containerRect.left;
 
-      // Attempt centered positions (transform: translateX(-50%) handles centering)
-      // We want to ensure:
-      // 1) labels don't overflow container edges
-      // 2) labels do not overlap (minGap apart)
-
       // Compute left edge and right edge of labels if centered:
       let initialLabelLeftEdge = initialLeftPx - initialWidth / 2;
       let initialLabelRightEdge = initialLeftPx + initialWidth / 2;
@@ -208,11 +212,9 @@
 
       // Clamp to container edges:
       if (initialLabelLeftEdge < 0) {
-        // shift initial label right so left edge is 0
         initialLeftPx += -initialLabelLeftEdge;
       }
       if (finalLabelRightEdge > containerRect.width) {
-        // shift final label left so right edge is container width
         finalLeftPx -= (finalLabelRightEdge - containerRect.width);
       }
 
@@ -224,32 +226,10 @@
 
       // Check for overlap, if so push initial label left and final label right
       if (initialLabelRightEdge + minGap > finalLabelLeftEdge) {
-        // Calculate overlap amount
         const overlap = (initialLabelRightEdge + minGap) - finalLabelLeftEdge;
-
-        // Shift initial label left by half overlap, but not beyond left edge
         initialLeftPx = Math.max(initialLeftPx - overlap / 2, initialWidth / 2);
-
-        // Shift final label right by half overlap, but not beyond container right edge
         finalLeftPx = Math.min(finalLeftPx + overlap / 2, containerRect.width - finalWidth / 2);
       }
 
-      // Apply final positions in percent relative to container width
       const initialPercent = (initialLeftPx / containerRect.width) * 100;
-      const finalPercent = (finalLeftPx / containerRect.width) * 100;
-
-      initialWrapper.style.left = `${initialPercent}%`;
-      finalWrapper.style.left = `${finalPercent}%`;
-    }
-
-    window.addEventListener('resize', () => {
-      const labelWrappers = labelRow.querySelectorAll('.label-wrapper');
-      if (labelWrappers.length === 2) {
-        setTimeout(() => {
-          fixLabelPositions(labelWrappers[0], labelWrappers[1]);
-        }, 100);
-      }
-    });
-  </script>
-</body>
-</html>
+      const finalPercent
