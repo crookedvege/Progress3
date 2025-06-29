@@ -19,16 +19,15 @@
 
     .label-row {
       position: relative;
-      height: 1.8em;
+      height: 2em;
       margin-bottom: 0.2em;
     }
 
     .label-wrapper {
       position: absolute;
       bottom: 0;
-      /* Left will be set dynamically to exact percent */
-      width: max-content; /* shrink to content width */
       white-space: nowrap;
+      transform: translateX(-50%);
     }
 
     .goal-label {
@@ -39,27 +38,30 @@
       border-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       line-height: 1.1;
-      position: relative;
-      /* offset label text so it doesn't overlap line */
     }
 
-    /* For the initial goal label, text to the left of the line */
-    .goal-label.left {
-      margin-right: 6px;
+    /* Different horizontal offsets for labels to avoid overlap */
+    .left-label {
+      transform: translateX(calc(-50% - 30px));
+    }
+    .right-label {
+      transform: translateX(calc(-50% + 30px));
     }
 
-    /* For final goal label, text to the right of the line */
-    .goal-label.right {
-      margin-left: 6px;
-    }
-
-    .label-line {
-      position: absolute;
-      bottom: 0;
-      left: 0;  /* line is exactly at point */
-      width: 1px;
-      height: 12px;
-      background: black;
+    @media (max-width: 500px) {
+      .label-row {
+        height: 2.5em;
+      }
+      .goal-label {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+      }
+      .left-label {
+        transform: translateX(calc(-50% - 20px));
+      }
+      .right-label {
+        transform: translateX(calc(-50% + 20px));
+      }
     }
 
     .bar-bg {
@@ -147,8 +149,11 @@
         progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
         progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`, 'left');
-        addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`, 'right');
+        // Clear previous labels
+        labelRow.innerHTML = '';
+
+        addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`, 'left-label');
+        addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`, 'right-label');
       })
       .catch(err => {
         console.error(err);
@@ -157,21 +162,17 @@
         progressLine2.textContent = '';
       });
 
-    function addLabel(container, percent, text, side) {
+    function addLabel(container, percent, text, positionClass) {
       const wrapper = document.createElement('div');
-      wrapper.className = 'label-wrapper';
+      wrapper.className = `label-wrapper ${positionClass}`;
       wrapper.style.left = `${percent}%`;
       wrapper.style.bottom = '0';
 
       const label = document.createElement('div');
-      label.className = 'goal-label ' + side;
+      label.className = 'goal-label';
       label.textContent = text;
 
-      const line = document.createElement('div');
-      line.className = 'label-line';
-
       wrapper.appendChild(label);
-      wrapper.appendChild(line);
       container.appendChild(wrapper);
     }
   </script>
