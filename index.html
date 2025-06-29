@@ -52,38 +52,37 @@
       box-sizing: border-box;
     }
 
-    .goal-label {
+    .label-wrapper {
       position: absolute;
-      top: -2.5em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      top: -2.8em;
+      transform: translateX(-50%);
+      z-index: 4;
+    }
+
+    .goal-label {
       font-size: 0.75rem;
       color: #000;
-      white-space: nowrap;
-      z-index: 4;
-      transform: translateX(-50%);
-      background: white;
+      background: #fff;
       padding: 2px 6px;
       border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      white-space: nowrap;
     }
 
     .label-line {
-      position: absolute;
       width: 2px;
-      height: 1.5em;
+      height: 12px;
       background: #000;
-      top: -1em;
-      z-index: 3;
-      transform: translateX(-50%);
+      margin-top: 2px;
     }
 
     .progress-text {
       margin-top: 1em;
       font-size: 1rem;
       line-height: 1.4;
-    }
-
-    #progress-line1, #progress-line2 {
       word-wrap: break-word;
     }
   </style>
@@ -139,11 +138,8 @@
 
     function addLabel(percent, labelText) {
       const wrapper = document.createElement('div');
-      wrapper.style.position = 'absolute';
+      wrapper.className = 'label-wrapper';
       wrapper.style.left = `${percent}%`;
-      wrapper.style.top = '-2.5em';
-      wrapper.style.transform = 'translateX(-50%)';
-      wrapper.style.zIndex = '4';
 
       const label = document.createElement('div');
       label.className = 'goal-label';
