@@ -3,65 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Progress</title>
+  <title>Fundraising Progress</title>
   <style>
     body {
       font-family: sans-serif;
       margin: 0;
-      padding: 0;
-      background: transparent;
-      color: #333;
+      padding: 2em;
     }
 
-    .bar-container {
-      position: relative;
-      padding-top: 2.8em;
+    #progress-container {
       width: 100%;
+      max-width: 1000px;
+      margin: auto;
     }
 
     .bar-bg {
-      display: flex;
-      height: 20px;
-      border-radius: 8px;
-      overflow: hidden;
       position: relative;
+      background: #ddd;
+      border-radius: 8px;
+      height: 24px;
+      overflow: hidden;
     }
 
-    .bar-main-bg {
-      background: #f9f9f9;
-      height: 100%;
-    }
-
-    .bar-stretch-bg {
-      background: #e0e0e0;
-      height: 100%;
-    }
-
-    .bar-fill {
-      background: #f9ca24;
-      height: 100%;
+    .bar-initial-bg {
       position: absolute;
-      top: 0;
       left: 0;
-      width: 0%;
-      transition: width 0.6s ease;
+      top: 0;
+      height: 100%;
+      background-color: #f8f8f8; /* off-white */
       z-index: 1;
     }
 
-    .bar-text {
+    .bar-fill {
       position: absolute;
-      right: 8px;
-      top: 1px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #333;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: #f4c421;
       z-index: 2;
-    }
-
-    .summary {
-      margin-top: 6px;
-      font-size: 0.9rem;
-      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 6px;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px 0 0 8px;
+      box-sizing: border-box;
     }
 
     .marker {
@@ -70,7 +57,7 @@
       height: 100%;
       width: 2px;
       background: #000;
-      z-index: 2;
+      z-index: 3;
     }
 
     .goal-label {
@@ -80,81 +67,88 @@
       font-size: 0.75rem;
       color: #000;
       white-space: nowrap;
-      z-index: 2;
+      z-index: 3;
+    }
+
+    .goal-label.right {
+      transform: translateX(-100%);
+    }
+
+    .progress-text {
+      margin-top: 0.5em;
+      font-size: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="bar-container">
+  <div id="progress-container">
     <div class="bar-bg" id="bar-bg">
-      <div class="bar-main-bg" id="main-bg"></div>
-      <div class="bar-stretch-bg" id="stretch-bg"></div>
-      <div class="bar-fill" id="bar-fill">
-        <div class="bar-text" id="bar-text">0%</div>
-      </div>
+      <div class="bar-initial-bg" id="bar-initial-bg"></div>
+      <div class="bar-fill" id="bar-fill">Loading…</div>
     </div>
+    <div class="progress-text" id="progress-text">Loading…</div>
+    <div class="progress-text" id="stretch-text"></div>
   </div>
-  <div class="summary" id="summary">Loading…</div>
 
   <script>
-    async function fetchProgress() {
-      try {
-        const response = await fetch('/.netlify/functions/getProgress');
-        const data = await response.json();
+    const barFill = document.getElementById('bar-fill');
+    const barBg = document.getElementById('bar-bg');
+    const barInitialBg = document.getElementById('bar-initial-bg');
+    const progressText = document.getElementById('progress-text');
+    const stretchText = document.getElementById('stretch-text');
 
-        const { total, goal, stretchGoal } = data;
+    const INITIAL_GOAL = 10000;
+    const FINAL_GOAL = 12000;
 
-        const percentOfStretch = Math.min((total / stretchGoal) * 100, 100);
-        const percentOfMain = Math.min((total / goal) * 100, 100);
+    // Fetch from your backend (replace with your real endpoint)
+    fetch('/.netlify/functions/get-total')
+      .then(res => res.json())
+      .then(data => {
+        const raised = data.total;
+        const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+        const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
-        const barFill = document.getElementById('bar-fill');
-        const barText = document.getElementById('bar-text');
-        const summary = document.getElementById('summary');
-        const barBg = document.getElementById('bar-bg');
-        const mainBg = document.getElementById('main-bg');
-        const stretchBg = document.getElementById('stretch-bg');
+        // Fill bar
+        barFill.style.width = `${percentTotal}%`;
+        barFill.textContent = `${percentInitial.toFixed(1)}% of initial goal`;
 
-        // Set background widths for main and stretch segments
-        const mainPercent = (goal / stretchGoal) * 100;
-        mainBg.style.width = `${mainPercent}%`;
-        stretchBg.style.width = `${100 - mainPercent}%`;
+        // Initial background
+        const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
+        barInitialBg.style.width = `${initialBgWidth}%`;
 
-        // Update fill
-        barFill.style.width = `${percentOfStretch}%`;
-        barText.textContent = `${percentOfMain.toFixed(1)}% of initial goal`;
+        // Text
+        progressText.textContent = `$${raised.toLocaleString()} raised of initial $${INITIAL_GOAL.toLocaleString()} goal!`;
 
-        const remaining = Math.max(stretchGoal - total, 0);
-        summary.innerHTML = `$${total.toLocaleString()} raised of initial $10,000 goal!<br>$${remaining.toLocaleString()} remaining to meet our final $12,000 goal!`;
+        const remaining = Math.max(0, FINAL_GOAL - raised);
+        stretchText.textContent = `$${remaining.toLocaleString()} remaining to meet our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        // Add markers and labels
-        function addMarker(percent, labelText, offsetRight = false) {
-          const marker = document.createElement('div');
-          marker.className = 'marker';
-          marker.style.left = `${percent}%`;
+        // Markers
+        addMarker((INITIAL_GOAL / FINAL_GOAL) * 100, `$${INITIAL_GOAL.toLocaleString()} initial goal`);
+        addMarker(100, `$${FINAL_GOAL.toLocaleString()} final goal`, true);
+      })
+      .catch(err => {
+        console.error(err);
+        barFill.textContent = 'Error loading';
+        progressText.textContent = '';
+      });
 
-          const label = document.createElement('div');
-          label.className = 'goal-label';
-          label.textContent = labelText;
-          label.style.left = `${percent}%`;
+    function addMarker(percent, labelText, alignRight = false) {
+      const marker = document.createElement('div');
+      marker.className = 'marker';
+      marker.style.left = `${percent}%`;
 
-          if (offsetRight) {
-            label.style.transform = 'translateX(-100%)'; // keep it inside the bar
-          }
+      const label = document.createElement('div');
+      label.className = 'goal-label';
+      label.textContent = labelText;
+      label.style.left = `${percent}%`;
 
-          barBg.appendChild(marker);
-          barBg.appendChild(label);
-        }
-
-        addMarker((goal / stretchGoal) * 100, '$10,000 initial goal');
-        addMarker(100, '$12,000 final goal', true);
-
-      } catch (error) {
-        console.error("Error fetching progress:", error);
-        document.getElementById('summary').textContent = "Error loading progress data.";
+      if (alignRight) {
+        label.classList.add('right');
       }
-    }
 
-    fetchProgress();
+      barBg.appendChild(marker);
+      barBg.appendChild(label);
+    }
   </script>
 </body>
 </html>
