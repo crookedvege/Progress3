@@ -199,24 +199,22 @@
         const barTopY = barRect.top - containerRect.top;
         const targetY = barTopY - 1; // 1px above bar
 
-        // Control Y offset for curves
-        const controlYOffset = 10;
+        // Control Y offset for curves — always ABOVE both label bottom and targetY
+        const controlYOffset = 20;
 
-        // Random subtle wiggle offsets
-        const randomXOffset = (Math.random() - 0.5) * 6; 
-        const randomYOffset = (Math.random() - 0.5) * 4;
-
-        // For initial goal: curve UP above labels (away from bar)
-        // For final goal: curve DOWN below labels (away from bar)
-        let baseControlY;
+        // Calculate control Y for both lines well ABOVE
+        // Both curves bend *upward*, just different heights
+        let controlY;
         if (label === initialLabel) {
-          baseControlY = Math.min(labelBottomY, targetY) - controlYOffset;  // bend UP
+          // initial goal: moderate curve
+          controlY = Math.min(labelBottomY, targetY) - controlYOffset;
         } else {
-          baseControlY = Math.max(labelBottomY, targetY) + controlYOffset;  // bend DOWN
+          // final goal: higher curve to avoid overlap
+          controlY = Math.min(labelBottomY, targetY) - controlYOffset * 1.5;
         }
 
-        const controlX = (labelCenterX + markerX) / 2 + randomXOffset;
-        const controlY = baseControlY + randomYOffset;
+        // Control X is midpoint + subtle random horizontal wiggle
+        const controlX = (labelCenterX + markerX) / 2 + (Math.random() - 0.5) * 6;
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', `M ${labelCenterX},${labelBottomY} Q ${controlX},${controlY} ${markerX},${targetY}`);
