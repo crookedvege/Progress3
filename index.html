@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fundraising Progress</title>
   <style>
     body {
@@ -17,10 +17,11 @@
       margin: auto;
     }
 
+    /* Label row tightened vertically */
     .label-row {
       position: relative;
-      height: 3em;
-      margin-bottom: 0.5em;
+      height: 1.8em;  /* less vertical space */
+      margin-bottom: 0.2em;
     }
 
     .label-wrapper {
@@ -29,6 +30,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      /* position relative so we can shift line and label easily */
+      bottom: 0;  /* align bottom of wrapper to label-row bottom */
     }
 
     .goal-label {
@@ -38,14 +41,17 @@
       padding: 2px 6px;
       border-radius: 4px;
       white-space: nowrap;
-      margin-bottom: 2px;
+      margin-bottom: 2px; /* space between label and line */
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      line-height: 1.1;
     }
 
+    /* Shorter line, positioned so it ends exactly at bar top */
     .label-line {
       width: 1px;
       height: 12px;
       background: black;
+      margin: 0;
     }
 
     .bar-bg {
@@ -133,7 +139,7 @@
         progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
         progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-        // Add offset to avoid overlap
+        // Offsets to avoid label overlap
         addLabel(labelRow, (INITIAL_GOAL / FINAL_GOAL) * 100, `initial goal $${INITIAL_GOAL.toLocaleString()}`, -30);
         addLabel(labelRow, 100, `final goal $${FINAL_GOAL.toLocaleString()}`, 30);
       })
@@ -147,7 +153,9 @@
     function addLabel(container, percent, text, horizontalOffset) {
       const wrapper = document.createElement('div');
       wrapper.className = 'label-wrapper';
+      // Place wrapper horizontally using percent + offset, vertically aligned at bottom of label-row
       wrapper.style.left = `calc(${percent}% + ${horizontalOffset}px)`;
+      wrapper.style.bottom = '0'; // Align to bottom of label-row
 
       const label = document.createElement('div');
       label.className = 'goal-label';
@@ -155,7 +163,6 @@
 
       const line = document.createElement('div');
       line.className = 'label-line';
-      // slight horizontal shift using transform if desired
 
       wrapper.appendChild(label);
       wrapper.appendChild(line);
