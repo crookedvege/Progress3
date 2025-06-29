@@ -21,6 +21,8 @@
       margin: auto;
       position: relative;
       overflow: visible;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     #labels-container {
@@ -101,33 +103,16 @@
       box-sizing: border-box;
     }
 
-    /* New black vertical divider lines */
-    .vertical-divider {
-      position: absolute;
-      top: 0;
-      width: 2px;
-      height: 100%;
-      background-color: black;
-      z-index: 10;
-    }
-
-    .vertical-divider.progress-end {
-      /* The line at the end of current progress */
-      border-radius: 0 2px 2px 0;
-    }
-
-    .vertical-divider.initial-goal {
-      /* The line separating initial and final goal */
-      border-radius: 2px 0 0 2px;
-    }
-
     .progress-text {
       margin-top: 1em;
       font-size: 1rem;
       line-height: 1.4;
       word-wrap: break-word;
-      position: relative;
-      z-index: 10;
+      white-space: normal; /* ALLOW WRAPPING */
+      overflow-wrap: break-word;
+      max-width: 100%;
+      color: #000;
+      /* Remove any height or overflow restrictions */
     }
 
     @media (max-width: 500px) {
@@ -148,7 +133,6 @@
     <div id="bar-bg">
       <div id="bar-initial-bg"></div>
       <div id="bar-fill">Loading…</div>
-      <!-- Divider lines will be inserted here dynamically -->
     </div>
 
     <div class="progress-text" id="progress-line1">Loading…</div>
@@ -271,22 +255,6 @@
 
           const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
           barInitialBg.style.width = initialBgWidth + '%';
-
-          // Remove existing divider lines before adding new
-          const existingDividers = barBg.querySelectorAll('.vertical-divider');
-          existingDividers.forEach(divider => divider.remove());
-
-          // Add vertical divider line at initial goal marker
-          const initialDivider = document.createElement('div');
-          initialDivider.className = 'vertical-divider initial-goal';
-          initialDivider.style.left = initialBgWidth + '%';
-          barBg.appendChild(initialDivider);
-
-          // Add vertical divider line at current progress end
-          const progressDivider = document.createElement('div');
-          progressDivider.className = 'vertical-divider progress-end';
-          progressDivider.style.left = percentTotal + '%';
-          barBg.appendChild(progressDivider);
 
           const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
           const remainingFinal = Math.max(0, FINAL_GOAL - raised);
