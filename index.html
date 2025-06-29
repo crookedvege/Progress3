@@ -18,7 +18,7 @@
     overflow: visible;
   }
 
-  /* Container for labels and SVG indicator lines */
+  /* Container for labels and indicator lines */
   #labels-container {
     position: relative;
     height: 3.5em;
@@ -41,14 +41,14 @@
     line-height: 1.1;
   }
 
-  #indicator-svg {
+  svg {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    overflow: visible;
+    height: 60px;
     pointer-events: none;
+    overflow: visible;
     z-index: 15;
   }
 
@@ -117,9 +117,7 @@
 </head>
 <body>
   <div id="progress-container">
-    <div id="labels-container">
-      <svg id="indicator-svg" aria-hidden="true"></svg>
-    </div>
+    <div id="labels-container"></div>
 
     <div id="bar-bg">
       <div id="bar-initial-bg"></div>
@@ -141,7 +139,10 @@
     const progressLine2 = document.getElementById('progress-line2');
     const progressContainer = document.getElementById('progress-container');
     const barBg = document.getElementById('bar-bg');
-    const svg = document.getElementById('indicator-svg');
+
+    // Create SVG once and reuse
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    labelsContainer.appendChild(svg);
 
     function createLabel(percent, text) {
       const wrapper = document.createElement('div');
@@ -181,27 +182,15 @@
       finalLabel.style.left = (finalLeft / containerRect.width) * 100 + '%';
     }
 
-    function randomWiggle(amplitude, frequency, phase, t) {
-      return amplitude * Math.sin(frequency * t + phase);
-    }
-
     function drawIndicatorLines(initialLabel, finalLabel) {
       svg.innerHTML = '';
 
       const containerRect = progressContainer.getBoundingClientRect();
       const barRect = barBg.getBoundingClientRect();
 
-      // Common target Y: 1px above bar top
       const barTopY = barRect.top - containerRect.top;
-      const targetY = barTopY - 1;
+      const targetY = barTopY - 1; // 1px above bar top
 
-      // Helper function to build cubic Bezier curve string
-      // Points: M start, C ctrl1, ctrl2, end
-      function buildCurve(startX, startY, ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, endX, endY) {
-        return `M ${startX},${startY} C ${ctrl1X},${ctrl1Y} ${ctrl2X},${ctrl2Y} ${endX},${endY}`;
-      }
-
-      // Calculate positions for each label
       const initialLabelRect = initialLabel.getBoundingClientRect();
       const finalLabelRect = finalLabel.getBoundingClientRect();
 
@@ -211,48 +200,32 @@
       const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
       const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
 
-      // Marker X positions on the bar
       const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
       const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-      // === Initial goal line (convex) — curve bends downward but stops above bar ===
-      // Control points placed to create a downward convex curve that stays above bar
+      // Initial goal line control points — keep curve above bar, no dipping into it
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
 
-      // For vertical control points, place them slightly *below* the start label bottom Y but
-      // at least 8px above the targetY to avoid dipping into the bar
-      const minCtrlY = targetY + 8;
-      const initCtrl1Y = Math.min(initialLabelBottomY + 20 + randomWiggle(8, 0.5, 0, 0), minCtrlY);
-      const initCtrl2Y = Math.min(initialLabelBottomY + 20 + randomWiggle(8, 0.5, Math.PI / 2, 0), minCtrlY);
+      const initCtrl1Y = Math.min(initialLabelBottomY + 10, targetY - 10);
+      const initCtrl2Y = Math.min(initialLabelBottomY + 15, targetY - 10);
 
       const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pathInit.setAttribute('class', 'indicator-path');
-      pathInit.setAttribute('d', buildCurve(
-        initialLabelCenterX, initialLabelBottomY,
-        initCtrl1X, initCtrl1Y,
-        initCtrl2X, initCtrl2Y,
-        initialMarkerX, targetY
-      ));
+      pathInit.setAttribute('d', `M${initialLabelCenterX},${initialLabelBottomY} C${initCtrl1X},${initCtrl1Y} ${initCtrl2X},${initCtrl2Y} ${initialMarkerX},${targetY}`);
       svg.appendChild(pathInit);
 
-      // === Final goal line (concave) — curve bends upward ===
-      // Control points placed to create upward curve with wiggle
+      // Final goal line control points — keep curve below label and above bar
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
 
-      const maxCtrlY = Math.min(finalLabelBottomY, targetY) - 40;
-      const finalCtrl1Y = maxCtrlY + randomWiggle(8, 0.5, 0, 0);
-      const finalCtrl2Y = maxCtrlY + randomWiggle(8, 0.5, Math.PI / 2, 0);
+      const finalCtrlYClamped = Math.max(targetY + 10, finalLabelBottomY + 5);
+      const finalCtrl1Y = finalCtrlYClamped;
+      const finalCtrl2Y = finalCtrlYClamped;
 
       const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       pathFinal.setAttribute('class', 'indicator-path');
-      pathFinal.setAttribute('d', buildCurve(
-        finalLabelCenterX, finalLabelBottomY,
-        finalCtrl1X, finalCtrl1Y,
-        finalCtrl2X, finalCtrl2Y,
-        finalMarkerX, targetY
-      ));
+      pathFinal.setAttribute('d', `M${finalLabelCenterX},${finalLabelBottomY} C${finalCtrl1X},${finalCtrl1Y} ${finalCtrl2X},${finalCtrl2Y} ${finalMarkerX},${targetY}`);
       svg.appendChild(pathFinal);
     }
 
@@ -277,7 +250,7 @@
           progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
           labelsContainer.innerHTML = '';
-          labelsContainer.appendChild(svg); // re-attach SVG
+          labelsContainer.appendChild(svg); // re-append SVG since we cleared innerHTML
 
           const initialLabel = createLabel(initialBgWidth, `initial goal $${INITIAL_GOAL.toLocaleString()}`);
           const finalLabel = createLabel(100, `final goal $${FINAL_GOAL.toLocaleString()}`);
