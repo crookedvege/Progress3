@@ -11,40 +11,37 @@
   }
 
   body {
-    font-family: sans-serif;
-    margin: 0;
-    padding: 2em;
+    font-family: 'OtakiVegeBags', sans-serif;
+    margin: 2em;
+    background: white;
+    color: black;
   }
 
   #progress-container {
     max-width: 1000px;
-    margin: auto;
+    margin: 0 auto;
     position: relative;
-    overflow: visible;
   }
 
   #labels-container {
     position: relative;
-    height: 3.5em;
-    margin-bottom: 0.5em;
-    overflow: visible;
+    height: 4em;
+    margin-bottom: 0.3em;
     user-select: none;
   }
 
   .label-wrapper {
     position: absolute;
     bottom: 10px;
+    background: white;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 1.22rem;
+    color: black;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    text-align: center;
     white-space: nowrap;
     z-index: 20;
-    background: #fff;
-    padding: 4px 12px;
-    border-radius: 999px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    font-family: 'OtakiVegeBags', sans-serif;
-    font-size: 1.22rem;
-    color: #000;
-    line-height: 1.2;
-    text-align: center;
   }
 
   svg {
@@ -95,7 +92,7 @@
     align-items: center;
     justify-content: flex-end;
     padding-right: 6px;
-    color: #000;
+    color: black;
     font-weight: bold;
     border-radius: 8px 0 0 8px;
     box-sizing: border-box;
@@ -105,7 +102,6 @@
     margin-top: 1em;
     font-size: 1rem;
     line-height: 1.4;
-    word-wrap: break-word;
     position: relative;
     z-index: 10;
   }
@@ -116,12 +112,11 @@
     color: #e37f4c;
     font-size: 1.1rem;
     line-height: 1.3;
-    word-wrap: break-word;
   }
 
   @media (max-width: 500px) {
     #labels-container {
-      height: 4em;
+      height: 4.5em;
     }
     .label-wrapper {
       font-size: 1.058rem;
@@ -263,10 +258,9 @@
     svg.appendChild(pathFinal);
   }
 
-  // Countdown timer logic
+  // Countdown timer logic (original date you had)
   function startCountdown() {
-    // Example target date: set your own final date/time here!
-    const targetDate = new Date("2025-12-31T23:59:59Z");
+    const targetDate = new Date("2025-07-31T23:59:59Z");
 
     function updateCountdown() {
       const now = new Date();
@@ -299,7 +293,7 @@
   // Fetch progress data and update UI accordingly
   async function update() {
     try {
-      // Replace this URL with your Netlify function URL if different
+      // Your Netlify function endpoint, replace if different
       const res = await fetch('/.netlify/functions/getProgress');
       if (!res.ok) throw new Error('Network error');
 
@@ -317,48 +311,57 @@
         barFill.textContent = Math.round(percentInitial) + '% of initial goal';
       }
 
-      // Set initial goal background width (always fixed at 10k / 12k ratio)
+      // Set initial goal background width fixed ratio
       barInitialBg.style.width = ((INITIAL_GOAL / FINAL_GOAL) * 100) + '%';
 
-      // Clear and recreate labels
+      // Clear previous labels
       labelsContainer.innerHTML = '';
-      const initialLabel = createLabel((INITIAL_GOAL / FINAL_GOAL) * 100, 'Initial goal<br>$10,000');
-      const finalLabel = createLabel(100, 'Final goal<br>$12,000');
+      labelsContainer.appendChild(svg);
+
+      // Create labels with your original text but positioned as originally
+      const initialLabel = createLabel((INITIAL_GOAL / FINAL_GOAL) * 100, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
+      const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
+
       labelsContainer.appendChild(initialLabel);
       labelsContainer.appendChild(finalLabel);
 
+      // Adjust label positions to avoid overlap
       adjustLabels(initialLabel, finalLabel);
+
+      // Draw the curved indicator lines from labels to progress bar markers
       drawIndicatorLines(initialLabel, finalLabel);
 
-      if (raised >= INITIAL_GOAL) {
-        const remaining = FINAL_GOAL - raised;
-        progressLine1.textContent = `Ngā mihi for helping us meet our initial $10,000 goal, we're only $${remaining.toLocaleString()} away from meeting our final $12,000 goal!`;
-        progressLine2.textContent = '';
+      // Update progress text lines per your requested text changes
+      if (raised < INITIAL_GOAL) {
+        progressLine1.textContent = `${Math.round((raised / INITIAL_GOAL) * 100)}% of first $${INITIAL_GOAL.toLocaleString()} goal!`;
+        const remaining = INITIAL_GOAL - raised;
+        progressLine2.textContent = `$${remaining.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
       } else {
-        const remainingInitial = INITIAL_GOAL - raised;
-        const remainingFinal = FINAL_GOAL - raised;
-        progressLine1.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $10,000 goal, and $${remainingFinal.toLocaleString()} from meeting our final $12,000 goal!`;
-        progressLine2.textContent = '';
+        progressLine1.textContent = `${Math.round((raised / FINAL_GOAL) * 100)}% of final goal!`;
+        const remaining = FINAL_GOAL - raised;
+        if (remaining > 0) {
+          progressLine2.textContent = `$${remaining.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
+        } else {
+          progressLine2.textContent = `We’ve reached our final goal! Thank you!`;
+        }
       }
-    } catch (err) {
-      barFill.textContent = 'Error loading progress';
+
+    } catch (e) {
+      barFill.textContent = 'Failed to load progress';
       progressLine1.textContent = '';
       progressLine2.textContent = '';
-      countdownTimer.textContent = '';
-      console.error(err);
+      console.error(e);
     }
   }
 
-  update();
-  startCountdown();
-
-  // Refresh data every 30 seconds
-  setInterval(update, 30000);
-
-  // On window resize, update labels and redraw lines
   window.addEventListener('resize', () => {
+    // Re-draw labels and curves on resize
     update();
   });
+
+  startCountdown();
+  update();
+  setInterval(update, 30000); // refresh progress every 30 seconds
 </script>
 </body>
 </html>
