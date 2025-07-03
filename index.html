@@ -163,44 +163,147 @@
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     labelsContainer.appendChild(svg);
 
+    function createLabel(percent, text) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'label-wrapper';
+      wrapper.innerHTML = text;
+      wrapper.style.left = percent + '%';
+      return wrapper;
+    }
+
     function clamp(value, min, max) {
       return Math.min(Math.max(value, min), max);
     }
 
+    function adjustLabels(initialLabel, finalLabel) {
+      const containerRect = progressContainer.getBoundingClientRect();
+
+      const initialWidth = initialLabel.offsetWidth;
+      const finalWidth = finalLabel.offsetWidth;
+
+      const initialPos = (INITIAL_GOAL / FINAL_GOAL) * containerRect.width;
+      const finalPos = containerRect.width;
+
+      let initialLeft = initialPos - initialWidth / 2;
+      let finalLeft = finalPos - finalWidth / 2;
+
+      initialLeft = clamp(initialLeft, 0, containerRect.width - initialWidth);
+      finalLeft = clamp(finalLeft, 0, containerRect.width - finalWidth);
+
+      const minGap = 8;
+
+      if (initialLeft + initialWidth + minGap > finalLeft) {
+        initialLeft = clamp(initialLeft - (initialLeft + initialWidth + minGap - finalLeft), 0, containerRect.width - initialWidth);
+        finalLeft = clamp(finalLeft + (initialLeft + initialWidth + minGap - finalLeft), 0, containerRect.width - finalWidth);
+      }
+
+      initialLabel.style.left = (initialLeft / containerRect.width) * 100 + '%';
+      finalLabel.style.left = (finalLeft / containerRect.width) * 100 + '%';
+    }
+
+    function drawIndicatorLines(initialLabel, finalLabel) {
+      svg.innerHTML = '';
+
+      const containerRect = progressContainer.getBoundingClientRect();
+      const barRect = barBg.getBoundingClientRect();
+
+      const barTopY = barRect.top - containerRect.top;
+      const targetY = barTopY - 1;
+
+      const initialLabelRect = initialLabel.getBoundingClientRect();
+      const finalLabelRect = finalLabel.getBoundingClientRect();
+
+      const initialLabelCenterX = initialLabelRect.left + initialLabelRect.width / 2 - containerRect.left;
+      const initialLabelBottomY = initialLabelRect.bottom - containerRect.top;
+
+      const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
+      const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
+
+      const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
+      const finalMarkerX = barRect.width + barRect.left - containerRect.left;
+
+      const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
+      const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
+      const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
+      const initCtrlYOffset = 12;
+      const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
+
+      const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathInit.setAttribute('class', 'indicator-path');
+      pathInit.setAttribute('d',
+        `M${initialLabelCenterX},${initialLabelBottomY} 
+         C${initCtrl1X},${initCtrlY} ${initCtrl2X},${initCtrlY} ${initialMarkerX},${targetY}`
+      );
+      svg.appendChild(pathInit);
+
+      const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
+      const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
+      const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
+      const finalCtrlYOffset = 12;
+      const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
+
+      const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathFinal.setAttribute('class', 'indicator-path');
+      pathFinal.setAttribute('d',
+        `M${finalLabelCenterX},${finalLabelBottomY} 
+         C${finalCtrl1X},${finalCtrlY} ${finalCtrl2X},${finalCtrlY} ${finalMarkerX},${targetY}`
+      );
+      svg.appendChild(pathFinal);
+    }
+
     function update() {
       fetch('/.netlify/functions/getProgress')
-      .then(response => response.json())
-      .then(data => {
-        const total = data.total;
-        const percent = Math.min(total / FINAL_GOAL, 1) * 100;
+        .then(res => res.json())
+        .then(data => {
+          const raised = data.total;
+          const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+          const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
-        barFill.style.width = percent + '%';
+          barFill.style.width = percentTotal + '%';
+          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
 
-        // Update main progress text
-        if (total < INITIAL_GOAL) {
-          const percentInitial = Math.floor((total / INITIAL_GOAL) * 100);
-          progressLine1.textContent = `${percentInitial}% of initial goal!`;
-        } else {
-          const percentFinal = Math.floor((total / FINAL_GOAL) * 100);
-          progressLine1.textContent = `First goal met! ${percentFinal}% of final goal!`;
-        }
+          const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
+          barInitialBg.style.width = initialBgWidth + '%';
 
-        // Update subtext
-        if (total < INITIAL_GOAL) {
-          const initialRemaining = INITIAL_GOAL - total;
-          const finalRemaining = FINAL_GOAL - total;
-          progressLine2.textContent = `We're only $${initialRemaining.toLocaleString()} from meeting initial $10,000 goal, and $${finalRemaining.toLocaleString()} from meeting our final $12,000 goal!`;
-        } else {
-          const finalRemaining = FINAL_GOAL - total;
-          progressLine2.textContent = `We've met our basic goal, and are only $${finalRemaining.toLocaleString()} from our final $12,000 goal!`;
-        }
-      });
+          const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
+          const remainingFinal = Math.max(0, FINAL_GOAL - raised);
+
+          progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
+          progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+
+          labelsContainer.innerHTML = '';
+          labelsContainer.appendChild(svg);
+
+          const initialLabel = createLabel(initialBgWidth, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
+          const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
+
+          labelsContainer.appendChild(initialLabel);
+          labelsContainer.appendChild(finalLabel);
+
+          adjustLabels(initialLabel, finalLabel);
+          drawIndicatorLines(initialLabel, finalLabel);
+        })
+        .catch(err => {
+          console.error(err);
+          barFill.textContent = 'Error loading';
+          progressLine1.textContent = '';
+          progressLine2.textContent = '';
+        });
     }
 
     function updateTimer() {
       const now = new Date();
 
-      const targetTimeUTC = Date.UTC(2025, 6, 6, 11, 59, 0); // July 6, 2025 23:59 NZST (UTC+12)
+      const targetYear = 2025;
+      const targetMonth = 7; // July
+      const targetDay = 6;
+      const targetHour = 23;
+      const targetMinute = 59;
+
+      // NZST is UTC+12 in July (no daylight savings)
+      // So target UTC time = July 6, 2025 23:59 NZST = July 6, 2025 11:59 -12 hours UTC
+      const targetTimeUTC = Date.UTC(targetYear, targetMonth - 1, targetDay, targetHour - 12, targetMinute, 0);
+
       const diff = targetTimeUTC - now.getTime();
 
       if (diff <= 0) {
@@ -213,11 +316,12 @@
       const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-      countdownTimer.textContent = `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds remaining`;
+      countdownTimer.textContent =
+        `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds remaining`;
     }
 
+    window.addEventListener('resize', update);
     update();
-    updateTimer();
     setInterval(() => {
       update();
       updateTimer();
