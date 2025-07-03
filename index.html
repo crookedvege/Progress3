@@ -82,10 +82,9 @@
       background-color: #fff9c4;
       z-index: 1;
       border-radius: 8px 0 0 8px;
-      width: 83.3333%; /* 10,000/12,000 * 100 */
     }
 
-    #bar-fill-initial {
+    #bar-fill {
       position: absolute;
       left: 0;
       top: 0;
@@ -100,25 +99,6 @@
       font-weight: bold;
       border-radius: 8px 0 0 8px;
       box-sizing: border-box;
-      white-space: nowrap;
-      overflow: hidden;
-      width: 0%;
-      transition: width 0.5s ease;
-      user-select: none;
-    }
-
-    #bar-fill-stretch {
-      position: absolute;
-      top: 0;
-      height: 100%;
-      background: #dd824c;
-      z-index: 4;
-      border-radius: 0 8px 8px 0;
-      box-sizing: border-box;
-      left: 0;
-      width: 0%;
-      transition: left 0.5s ease, width 0.5s ease;
-      user-select: none;
     }
 
     .progress-text {
@@ -128,7 +108,6 @@
       word-wrap: break-word;
       position: relative;
       z-index: 10;
-      user-select: none;
     }
 
     #countdown-timer {
@@ -138,7 +117,6 @@
       font-size: 1.1rem;
       line-height: 1.3;
       word-wrap: break-word;
-      user-select: none;
     }
 
     @media (max-width: 500px) {
@@ -161,8 +139,7 @@
 
     <div id="bar-bg">
       <div id="bar-initial-bg"></div>
-      <div id="bar-fill-initial">Loading…</div>
-      <div id="bar-fill-stretch"></div>
+      <div id="bar-fill">Loading…</div>
     </div>
 
     <div class="progress-text" id="progress-line1">Loading…</div>
@@ -174,8 +151,7 @@
     const INITIAL_GOAL = 10000;
     const FINAL_GOAL = 12000;
 
-    const barFillInitial = document.getElementById('bar-fill-initial');
-    const barFillStretch = document.getElementById('bar-fill-stretch');
+    const barFill = document.getElementById('bar-fill');
     const barInitialBg = document.getElementById('bar-initial-bg');
     const labelsContainer = document.getElementById('labels-container');
     const progressLine1 = document.getElementById('progress-line1');
@@ -246,7 +222,6 @@
       const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
       const finalMarkerX = barRect.width + barRect.left - containerRect.left;
 
-      // Initial goal line (smiley curve ∪)
       const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
       const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
       const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
@@ -261,7 +236,6 @@
       );
       svg.appendChild(pathInit);
 
-      // Final goal line (sad curve ∩)
       const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
       const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
       const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
@@ -277,121 +251,81 @@
       svg.appendChild(pathFinal);
     }
 
-    // Countdown timer to 11:59 PM NZT July 6
-    // NZT = New Zealand Standard Time = UTC+12 or NZDT = UTC+13 (daylight savings)
-    // For simplicity, assume NZST UTC+12 (adjust if you want daylight savings)
-    // We'll create the target time in UTC by subtracting 12 hours
-    // Note: To be perfectly accurate, you may want to use a timezone lib, but here we do manual offset.
-
-    function getCountdownTime() {
-      // July 6, 2025 23:59 NZT (UTC+12)
-      // So UTC time is July 6, 2025 11:59 UTC (subtract 12 hours)
-      // Construct Date in UTC to avoid confusion
-      return new Date(Date.UTC(2025, 6 - 1, 6, 11, 59, 0)); // months are 0-based in JS
-    }
-
-    function updateCountdown() {
-      const now = new Date();
-      const target = getCountdownTime();
-      const diff = target - now;
-
-      if (diff <= 0) {
-        countdownTimer.textContent = "Deadline has passed.";
-        return;
-      }
-
-      const seconds = Math.floor(diff / 1000) % 60;
-      const minutes = Math.floor(diff / 1000 / 60) % 60;
-      const hours = Math.floor(diff / 1000 / 60 / 60) % 24;
-      const days = Math.floor(diff / 1000 / 60 / 60 / 24);
-
-      let parts = [];
-      if (days > 0) parts.push(days + "d");
-      parts.push(String(hours).padStart(2, "0") + "h");
-      parts.push(String(minutes).padStart(2, "0") + "m");
-      parts.push(String(seconds).padStart(2, "0") + "s");
-
-      countdownTimer.textContent = "Time remaining: " + parts.join(" ");
-    }
-
     function update() {
       fetch('/.netlify/functions/getProgress')
         .then(res => res.json())
         .then(data => {
           const raised = data.total;
+          const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+          const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
-          const initialProgress = Math.min(raised, INITIAL_GOAL);
-          const stretchProgress = Math.max(raised - INITIAL_GOAL, 0);
+          barFill.style.width = percentTotal + '%';
+          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
 
-          const initialPercent = (initialProgress / FINAL_GOAL) * 100;
-          const stretchPercent = (stretchProgress / FINAL_GOAL) * 100;
+          const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
+          barInitialBg.style.width = initialBgWidth + '%';
 
-          // Update yellow part width and text
-          barFillInitial.style.width = initialPercent + '%';
+          const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
+          const remainingFinal = Math.max(0, FINAL_GOAL - raised);
 
-          // Calculate percentage for label:
-          // if raised < INITIAL_GOAL: % of initial goal (based on raised/INITIAL_GOAL)
-          // else: % of final goal (based on raised/FINAL_GOAL)
-          let percentText;
-          if (raised < INITIAL_GOAL) {
-            percentText = Math.round((raised / INITIAL_GOAL) * 100) + '% of initial goal';
-          } else {
-            percentText = Math.round((raised / FINAL_GOAL) * 100) + '% of final goal';
-          }
-          barFillInitial.textContent = percentText;
+          progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
+          progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
 
-          // Update orange part width and position
-          barFillStretch.style.width = stretchPercent + '%';
-          barFillStretch.style.left = initialPercent + '%';
+          labelsContainer.innerHTML = '';
+          labelsContainer.appendChild(svg);
 
-          // Progress texts
-          const remainingToInitial = Math.max(0, INITIAL_GOAL - raised);
-          const remainingToFinal = Math.max(0, FINAL_GOAL - raised);
+          const initialLabel = createLabel(initialBgWidth, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
+          const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
 
-          if (raised < INITIAL_GOAL) {
-            progressLine1.textContent = `${percentText}`;
-            progressLine2.textContent = `$${remainingToInitial.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
-          } else if (raised < FINAL_GOAL) {
-            progressLine1.textContent = `${percentText}`;
-            progressLine2.textContent = `$${remainingToFinal.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
-          } else {
-            progressLine1.textContent = `🎉 Final goal reached! 🎉`;
-            progressLine2.textContent = '';
-          }
+          labelsContainer.appendChild(initialLabel);
+          labelsContainer.appendChild(finalLabel);
+
+          adjustLabels(initialLabel, finalLabel);
+          drawIndicatorLines(initialLabel, finalLabel);
         })
-        .catch(() => {
-          barFillInitial.textContent = "Error loading data";
-          progressLine1.textContent = "";
-          progressLine2.textContent = "";
+        .catch(err => {
+          console.error(err);
+          barFill.textContent = 'Error loading';
+          progressLine1.textContent = '';
+          progressLine2.textContent = '';
         });
     }
 
-    // Initial and final labels
-    const initialLabel = createLabel((INITIAL_GOAL / FINAL_GOAL) * 100, 'Initial goal<br>$10,000');
-    const finalLabel = createLabel(100, 'Final goal<br>$12,000');
+    function updateTimer() {
+      const now = new Date();
 
-    labelsContainer.appendChild(initialLabel);
-    labelsContainer.appendChild(finalLabel);
+      const targetYear = 2025;
+      const targetMonth = 7; // July
+      const targetDay = 6;
+      const targetHour = 23;
+      const targetMinute = 59;
 
-    function onResize() {
-      adjustLabels(initialLabel, finalLabel);
-      drawIndicatorLines(initialLabel, finalLabel);
+      // NZST is UTC+12 in July (no daylight savings)
+      // So target UTC time = July 6, 2025 23:59 NZST = July 6, 2025 11:59 -12 hours UTC
+      const targetTimeUTC = Date.UTC(targetYear, targetMonth - 1, targetDay, targetHour - 12, targetMinute, 0);
+
+      const diff = targetTimeUTC - now.getTime();
+
+      if (diff <= 0) {
+        countdownTimer.textContent = 'The fundraiser has closed!';
+        return;
+      }
+
+      const seconds = Math.floor((diff / 1000) % 60);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      countdownTimer.textContent =
+        `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds remaining`;
     }
 
-    window.addEventListener('resize', onResize);
-
-    // Initial draw and label adjust
-    onResize();
-
-    // Update loop for countdown and progress
+    window.addEventListener('resize', update);
     update();
-    updateCountdown();
-
     setInterval(() => {
       update();
-      updateCountdown();
-    }, 5000); // every 5 seconds for progress, every 5 seconds is fine for countdown
-
+      updateTimer();
+    }, 1000);
   </script>
 </body>
 </html>
