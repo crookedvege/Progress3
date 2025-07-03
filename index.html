@@ -276,7 +276,8 @@
           progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
 
           if (raised >= INITIAL_GOAL) {
-            progressLine2.textContent = `Ngā mihi for helping us meet our initial $${INITIAL_GOAL.toLocaleString()} goal, we're only $${remainingFinal.toLocaleString()} away from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+            progressLine2.innerHTML = 
+              `We're only $${remainingFinal.toLocaleString()} away from meeting our final $${FINAL_GOAL.toLocaleString()} goal!<br>Ngā mihi nui for helping us reach our initial $${INITIAL_GOAL.toLocaleString()} goal!`;
           } else {
             progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
           }
