@@ -260,7 +260,12 @@
           const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
           barFill.style.width = percentTotal + '%';
-          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
+
+          if (raised >= INITIAL_GOAL) {
+            barFill.textContent = Math.round(percentTotal) + '% of final goal';
+          } else {
+            barFill.textContent = Math.round(percentInitial) + '% of initial goal';
+          }
 
           const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
           barInitialBg.style.width = initialBgWidth + '%';
@@ -269,7 +274,12 @@
           const remainingFinal = Math.max(0, FINAL_GOAL - raised);
 
           progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
-          progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+
+          if (raised >= INITIAL_GOAL) {
+            progressLine2.textContent = `Ngā mihi for helping us meet our initial $${INITIAL_GOAL.toLocaleString()} goal, we're only $${remainingFinal.toLocaleString()} away from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+          } else {
+            progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+          }
 
           labelsContainer.innerHTML = '';
           labelsContainer.appendChild(svg);
