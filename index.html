@@ -1,367 +1,331 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fundraising Progress</title>
-<style>
-  @font-face {
-    font-family: 'OtakiVegeBags';
-    src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fundraising Progress</title>
+  <style>
+    @font-face {
+      font-family: 'OtakiVegeBags';
+      src: url('netlify/font/OtakiVegeBags_Slim-Regular.ttf') format('truetype');
+    }
 
-  body {
-    font-family: 'OtakiVegeBags', sans-serif;
-    margin: 2em;
-    background: white;
-    color: black;
-  }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2em;
+    }
 
-  #progress-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    position: relative;
-  }
+    #progress-container {
+      max-width: 1000px;
+      margin: auto;
+      position: relative;
+      overflow: visible;
+    }
 
-  #labels-container {
-    position: relative;
-    height: 4em;
-    margin-bottom: 0.3em;
-    user-select: none;
-  }
-
-  .label-wrapper {
-    position: absolute;
-    bottom: 10px;
-    background: white;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 1.22rem;
-    color: black;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    text-align: center;
-    white-space: nowrap;
-    z-index: 20;
-  }
-
-  svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 60px;
-    pointer-events: none;
-    overflow: visible;
-    z-index: 15;
-  }
-
-  .indicator-path {
-    fill: none;
-    stroke: black;
-    stroke-width: 2;
-    stroke-linecap: round;
-  }
-
-  #bar-bg {
-    position: relative;
-    background: #ddd;
-    border-radius: 8px;
-    height: 24px;
-    overflow: hidden;
-    z-index: 5;
-  }
-
-  #bar-initial-bg {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    background-color: #fff9c4; /* pale yellow */
-    z-index: 1;
-    border-radius: 8px 0 0 8px;
-  }
-
-  #bar-fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    background: #f4c421; /* bright yellow */
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 6px;
-    color: black;
-    font-weight: bold;
-    border-radius: 8px 0 0 8px;
-    box-sizing: border-box;
-  }
-
-  .progress-text {
-    margin-top: 1em;
-    font-size: 1rem;
-    line-height: 1.4;
-    position: relative;
-    z-index: 10;
-  }
-
-  #countdown-timer {
-    margin-top: 0.7em;
-    font-weight: bold;
-    color: #e37f4c;
-    font-size: 1.1rem;
-    line-height: 1.3;
-  }
-
-  @media (max-width: 500px) {
     #labels-container {
-      height: 4.5em;
+      position: relative;
+      height: 3.5em;
+      margin-bottom: 0.5em;
+      overflow: visible;
+      user-select: none;
     }
+
     .label-wrapper {
-      font-size: 1.058rem;
-      padding: 4px 10px;
+      position: absolute;
+      bottom: 10px;
+      white-space: nowrap;
+      z-index: 20;
+      background: #fff;
+      padding: 4px 12px;
+      border-radius: 999px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-family: 'OtakiVegeBags', sans-serif;
+      font-size: 1.22rem;
+      color: #000;
+      line-height: 1.2;
+      text-align: center;
     }
-    #countdown-timer {
+
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 15;
+    }
+
+    .indicator-path {
+      fill: none;
+      stroke: black;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    #bar-bg {
+      position: relative;
+      background: #ddd;
+      border-radius: 8px;
+      height: 24px;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    #bar-initial-bg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background-color: #fff9c4;
+      z-index: 1;
+      border-radius: 8px 0 0 8px;
+    }
+
+    #bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: #f4c421;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 6px;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px 0 0 8px;
+      box-sizing: border-box;
+    }
+
+    .progress-text {
+      margin-top: 1em;
       font-size: 1rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+      position: relative;
+      z-index: 10;
     }
-  }
-</style>
+
+    #countdown-timer {
+      margin-top: 0.7em;
+      font-weight: bold;
+      color: #e37f4c;
+      font-size: 1.1rem;
+      line-height: 1.3;
+      word-wrap: break-word;
+    }
+
+    @media (max-width: 500px) {
+      #labels-container {
+        height: 4em;
+      }
+      .label-wrapper {
+        font-size: 1.058rem;
+        padding: 4px 10px;
+      }
+      #countdown-timer {
+        font-size: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
-<div id="progress-container">
-  <div id="labels-container"></div>
+  <div id="progress-container">
+    <div id="labels-container"></div>
 
-  <div id="bar-bg">
-    <div id="bar-initial-bg"></div>
-    <div id="bar-fill">Loading…</div>
+    <div id="bar-bg">
+      <div id="bar-initial-bg"></div>
+      <div id="bar-fill">Loading…</div>
+    </div>
+
+    <div class="progress-text" id="progress-line1">Loading…</div>
+    <div class="progress-text" id="progress-line2"></div>
+    <div id="countdown-timer">Loading timer…</div>
   </div>
 
-  <div class="progress-text" id="progress-line1">Loading…</div>
-  <div class="progress-text" id="progress-line2"></div>
-  <div id="countdown-timer">Loading timer…</div>
-</div>
+  <script>
+    const INITIAL_GOAL = 10000;
+    const FINAL_GOAL = 12000;
 
-<script>
-  const INITIAL_GOAL = 10000;
-  const FINAL_GOAL = 12000;
+    const barFill = document.getElementById('bar-fill');
+    const barInitialBg = document.getElementById('bar-initial-bg');
+    const labelsContainer = document.getElementById('labels-container');
+    const progressLine1 = document.getElementById('progress-line1');
+    const progressLine2 = document.getElementById('progress-line2');
+    const countdownTimer = document.getElementById('countdown-timer');
+    const progressContainer = document.getElementById('progress-container');
+    const barBg = document.getElementById('bar-bg');
 
-  const barFill = document.getElementById('bar-fill');
-  const barInitialBg = document.getElementById('bar-initial-bg');
-  const labelsContainer = document.getElementById('labels-container');
-  const progressLine1 = document.getElementById('progress-line1');
-  const progressLine2 = document.getElementById('progress-line2');
-  const countdownTimer = document.getElementById('countdown-timer');
-  const progressContainer = document.getElementById('progress-container');
-  const barBg = document.getElementById('bar-bg');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    labelsContainer.appendChild(svg);
 
-  // Create SVG element for indicator lines once
-  const svgNS = "http://www.w3.org/2000/svg";
-  let svg = document.createElementNS(svgNS, 'svg');
-  labelsContainer.appendChild(svg);
-
-  // Utility clamp function
-  function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
-  }
-
-  // Create label div at percent position with given html content
-  function createLabel(percent, html) {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'label-wrapper';
-    wrapper.innerHTML = html;
-    wrapper.style.left = percent + '%';
-    return wrapper;
-  }
-
-  // Adjust labels left/right so they don't overlap or overflow container
-  function adjustLabels(initialLabel, finalLabel) {
-    const containerRect = progressContainer.getBoundingClientRect();
-
-    const initialWidth = initialLabel.offsetWidth;
-    const finalWidth = finalLabel.offsetWidth;
-
-    const initialPos = (INITIAL_GOAL / FINAL_GOAL) * containerRect.width;
-    const finalPos = containerRect.width;
-
-    let initialLeft = initialPos - initialWidth / 2;
-    let finalLeft = finalPos - finalWidth / 2;
-
-    initialLeft = clamp(initialLeft, 0, containerRect.width - initialWidth);
-    finalLeft = clamp(finalLeft, 0, containerRect.width - finalWidth);
-
-    const minGap = 8; // minimum space between labels
-
-    if (initialLeft + initialWidth + minGap > finalLeft) {
-      // Push initial left and final right apart evenly
-      const overlap = initialLeft + initialWidth + minGap - finalLeft;
-      initialLeft = clamp(initialLeft - overlap / 2, 0, containerRect.width - initialWidth);
-      finalLeft = clamp(finalLeft + overlap / 2, 0, containerRect.width - finalWidth);
+    function createLabel(percent, text) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'label-wrapper';
+      wrapper.innerHTML = text;
+      wrapper.style.left = percent + '%';
+      return wrapper;
     }
 
-    initialLabel.style.left = (initialLeft / containerRect.width) * 100 + '%';
-    finalLabel.style.left = (finalLeft / containerRect.width) * 100 + '%';
-  }
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
 
-  // Draw the curved indicator lines from label bottoms to their respective markers on progress bar
-  function drawIndicatorLines(initialLabel, finalLabel) {
-    svg.innerHTML = '';
+    function adjustLabels(initialLabel, finalLabel) {
+      const containerRect = progressContainer.getBoundingClientRect();
 
-    const containerRect = progressContainer.getBoundingClientRect();
-    const barRect = barBg.getBoundingClientRect();
+      const initialWidth = initialLabel.offsetWidth;
+      const finalWidth = finalLabel.offsetWidth;
 
-    const barTopY = barRect.top - containerRect.top;
-    const targetY = barTopY - 1; // 1px above bar top
+      const initialPos = (INITIAL_GOAL / FINAL_GOAL) * containerRect.width;
+      const finalPos = containerRect.width;
 
-    const initialLabelRect = initialLabel.getBoundingClientRect();
-    const finalLabelRect = finalLabel.getBoundingClientRect();
+      let initialLeft = initialPos - initialWidth / 2;
+      let finalLeft = finalPos - finalWidth / 2;
 
-    // Centers of labels relative to container
-    const initialLabelCenterX = initialLabelRect.left + initialLabelRect.width / 2 - containerRect.left;
-    const initialLabelBottomY = initialLabelRect.bottom - containerRect.top;
+      initialLeft = clamp(initialLeft, 0, containerRect.width - initialWidth);
+      finalLeft = clamp(finalLeft, 0, containerRect.width - finalWidth);
 
-    const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
-    const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
+      const minGap = 8;
 
-    // Marker positions relative to container
-    const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
-    const finalMarkerX = barRect.width + barRect.left - containerRect.left;
+      if (initialLeft + initialWidth + minGap > finalLeft) {
+        initialLeft = clamp(initialLeft - (initialLeft + initialWidth + minGap - finalLeft), 0, containerRect.width - initialWidth);
+        finalLeft = clamp(finalLeft + (initialLeft + initialWidth + minGap - finalLeft), 0, containerRect.width - finalWidth);
+      }
 
-    // Control points for initial goal curved line (smiley ∪ shape below line)
-    const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
-    const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
-    const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
-    const initCtrlYOffset = 12;
-    const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
+      initialLabel.style.left = (initialLeft / containerRect.width) * 100 + '%';
+      finalLabel.style.left = (finalLeft / containerRect.width) * 100 + '%';
+    }
 
-    const pathInit = document.createElementNS(svgNS, 'path');
-    pathInit.setAttribute('class', 'indicator-path');
-    pathInit.setAttribute('d',
-      `M${initialLabelCenterX},${initialLabelBottomY} 
-       C${initCtrl1X},${initCtrlY} ${initCtrl2X},${initCtrlY} ${initialMarkerX},${targetY}`
-    );
-    svg.appendChild(pathInit);
+    function drawIndicatorLines(initialLabel, finalLabel) {
+      svg.innerHTML = '';
 
-    // Control points for final goal curved line (sad face ∩ shape above line)
-    const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
-    const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
-    const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
-    const finalCtrlYOffset = 12;
-    const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
+      const containerRect = progressContainer.getBoundingClientRect();
+      const barRect = barBg.getBoundingClientRect();
 
-    const pathFinal = document.createElementNS(svgNS, 'path');
-    pathFinal.setAttribute('class', 'indicator-path');
-    pathFinal.setAttribute('d',
-      `M${finalLabelCenterX},${finalLabelBottomY} 
-       C${finalCtrl1X},${finalCtrlY} ${finalCtrl2X},${finalCtrlY} ${finalMarkerX},${targetY}`
-    );
-    svg.appendChild(pathFinal);
-  }
+      const barTopY = barRect.top - containerRect.top;
+      const targetY = barTopY - 1;
 
-  // Countdown timer logic (original date you had)
-  function startCountdown() {
-    const targetDate = new Date("2025-07-31T23:59:59Z");
+      const initialLabelRect = initialLabel.getBoundingClientRect();
+      const finalLabelRect = finalLabel.getBoundingClientRect();
 
-    function updateCountdown() {
+      const initialLabelCenterX = initialLabelRect.left + initialLabelRect.width / 2 - containerRect.left;
+      const initialLabelBottomY = initialLabelRect.bottom - containerRect.top;
+
+      const finalLabelCenterX = finalLabelRect.left + finalLabelRect.width / 2 - containerRect.left;
+      const finalLabelBottomY = finalLabelRect.bottom - containerRect.top;
+
+      const initialMarkerX = (INITIAL_GOAL / FINAL_GOAL) * barRect.width + barRect.left - containerRect.left;
+      const finalMarkerX = barRect.width + barRect.left - containerRect.left;
+
+      const initCtrl1X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.35;
+      const initCtrl2X = initialLabelCenterX + (initialMarkerX - initialLabelCenterX) * 0.65;
+      const initCtrlYBaseline = (initialLabelBottomY + targetY) / 2;
+      const initCtrlYOffset = 12;
+      const initCtrlY = Math.min(initCtrlYBaseline + initCtrlYOffset, targetY - 6);
+
+      const pathInit = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathInit.setAttribute('class', 'indicator-path');
+      pathInit.setAttribute('d',
+        `M${initialLabelCenterX},${initialLabelBottomY} 
+         C${initCtrl1X},${initCtrlY} ${initCtrl2X},${initCtrlY} ${initialMarkerX},${targetY}`
+      );
+      svg.appendChild(pathInit);
+
+      const finalCtrl1X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.35;
+      const finalCtrl2X = finalLabelCenterX + (finalMarkerX - finalLabelCenterX) * 0.65;
+      const finalCtrlYBaseline = (finalLabelBottomY + targetY) / 2;
+      const finalCtrlYOffset = 12;
+      const finalCtrlY = Math.max(finalCtrlYBaseline - finalCtrlYOffset, finalLabelBottomY + 6);
+
+      const pathFinal = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathFinal.setAttribute('class', 'indicator-path');
+      pathFinal.setAttribute('d',
+        `M${finalLabelCenterX},${finalLabelBottomY} 
+         C${finalCtrl1X},${finalCtrlY} ${finalCtrl2X},${finalCtrlY} ${finalMarkerX},${targetY}`
+      );
+      svg.appendChild(pathFinal);
+    }
+
+    function update() {
+      fetch('/.netlify/functions/getProgress')
+        .then(res => res.json())
+        .then(data => {
+          const raised = data.total;
+          const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
+          const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
+
+          barFill.style.width = percentTotal + '%';
+          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
+
+          const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
+          barInitialBg.style.width = initialBgWidth + '%';
+
+          const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
+          const remainingFinal = Math.max(0, FINAL_GOAL - raised);
+
+          progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
+          progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+
+          labelsContainer.innerHTML = '';
+          labelsContainer.appendChild(svg);
+
+          const initialLabel = createLabel(initialBgWidth, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
+          const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
+
+          labelsContainer.appendChild(initialLabel);
+          labelsContainer.appendChild(finalLabel);
+
+          adjustLabels(initialLabel, finalLabel);
+          drawIndicatorLines(initialLabel, finalLabel);
+        })
+        .catch(err => {
+          console.error(err);
+          barFill.textContent = 'Error loading';
+          progressLine1.textContent = '';
+          progressLine2.textContent = '';
+        });
+    }
+
+    function updateTimer() {
       const now = new Date();
-      let diff = targetDate - now;
+
+      const targetYear = 2025;
+      const targetMonth = 7; // July
+      const targetDay = 6;
+      const targetHour = 23;
+      const targetMinute = 59;
+
+      // NZST is UTC+12 in July (no daylight savings)
+      // So target UTC time = July 6, 2025 23:59 NZST = July 6, 2025 11:59 -12 hours UTC
+      const targetTimeUTC = Date.UTC(targetYear, targetMonth - 1, targetDay, targetHour - 12, targetMinute, 0);
+
+      const diff = targetTimeUTC - now.getTime();
 
       if (diff <= 0) {
-        countdownTimer.textContent = "Fundraising has ended.";
-        clearInterval(intervalId);
+        countdownTimer.textContent = 'The fundraiser has closed!';
         return;
       }
 
+      const seconds = Math.floor((diff / 1000) % 60);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      diff -= days * (1000 * 60 * 60 * 24);
 
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      diff -= hours * (1000 * 60 * 60);
-
-      const minutes = Math.floor(diff / (1000 * 60));
-      diff -= minutes * (1000 * 60);
-
-      const seconds = Math.floor(diff / 1000);
-
-      countdownTimer.textContent = `Time left: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+      countdownTimer.textContent =
+        `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds remaining`;
     }
 
-    updateCountdown();
-    const intervalId = setInterval(updateCountdown, 1000);
-  }
-
-  // Fetch progress data and update UI accordingly
-  async function update() {
-    try {
-      // Your Netlify function endpoint, replace if different
-      const res = await fetch('/.netlify/functions/getProgress');
-      if (!res.ok) throw new Error('Network error');
-
-      const data = await res.json();
-      const raised = data.total;
-
-      const percentInitial = Math.min((raised / INITIAL_GOAL) * 100, 100);
-      const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
-
-      barFill.style.width = percentTotal + '%';
-
-      if (raised >= INITIAL_GOAL) {
-        barFill.textContent = Math.round(percentTotal) + '% of final goal';
-      } else {
-        barFill.textContent = Math.round(percentInitial) + '% of initial goal';
-      }
-
-      // Set initial goal background width fixed ratio
-      barInitialBg.style.width = ((INITIAL_GOAL / FINAL_GOAL) * 100) + '%';
-
-      // Clear previous labels
-      labelsContainer.innerHTML = '';
-      labelsContainer.appendChild(svg);
-
-      // Create labels with your original text but positioned as originally
-      const initialLabel = createLabel((INITIAL_GOAL / FINAL_GOAL) * 100, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
-      const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
-
-      labelsContainer.appendChild(initialLabel);
-      labelsContainer.appendChild(finalLabel);
-
-      // Adjust label positions to avoid overlap
-      adjustLabels(initialLabel, finalLabel);
-
-      // Draw the curved indicator lines from labels to progress bar markers
-      drawIndicatorLines(initialLabel, finalLabel);
-
-      // Update progress text lines per your requested text changes
-      if (raised < INITIAL_GOAL) {
-        progressLine1.textContent = `${Math.round((raised / INITIAL_GOAL) * 100)}% of first $${INITIAL_GOAL.toLocaleString()} goal!`;
-        const remaining = INITIAL_GOAL - raised;
-        progressLine2.textContent = `$${remaining.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
-      } else {
-        progressLine1.textContent = `${Math.round((raised / FINAL_GOAL) * 100)}% of final goal!`;
-        const remaining = FINAL_GOAL - raised;
-        if (remaining > 0) {
-          progressLine2.textContent = `$${remaining.toLocaleString()} away from our final goal of $${FINAL_GOAL.toLocaleString()}`;
-        } else {
-          progressLine2.textContent = `We’ve reached our final goal! Thank you!`;
-        }
-      }
-
-    } catch (e) {
-      barFill.textContent = 'Failed to load progress';
-      progressLine1.textContent = '';
-      progressLine2.textContent = '';
-      console.error(e);
-    }
-  }
-
-  window.addEventListener('resize', () => {
-    // Re-draw labels and curves on resize
+    window.addEventListener('resize', update);
     update();
-  });
-
-  startCountdown();
-  update();
-  setInterval(update, 30000); // refresh progress every 30 seconds
-</script>
+    setInterval(() => {
+      update();
+      updateTimer();
+    }, 1000);
+  </script>
 </body>
 </html>
