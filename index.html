@@ -163,16 +163,16 @@
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     labelsContainer.appendChild(svg);
 
-    function createLabel(percent, text) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'label-wrapper';
-      wrapper.innerHTML = text;
-      wrapper.style.left = percent + '%';
-      return wrapper;
-    }
-
     function clamp(value, min, max) {
       return Math.min(Math.max(value, min), max);
+    }
+
+    function createLabel(percent, html) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'label-wrapper';
+      wrapper.innerHTML = html;
+      wrapper.style.left = percent + '%';
+      return wrapper;
     }
 
     function adjustLabels(initialLabel, finalLabel) {
@@ -260,72 +260,58 @@
           const percentTotal = Math.min((raised / FINAL_GOAL) * 100, 100);
 
           barFill.style.width = percentTotal + '%';
-          barFill.textContent = Math.round(percentInitial) + '% of initial goal';
 
-          const initialBgWidth = (INITIAL_GOAL / FINAL_GOAL) * 100;
-          barInitialBg.style.width = initialBgWidth + '%';
-
-          const remainingInitial = Math.max(0, INITIAL_GOAL - raised);
-          const remainingFinal = Math.max(0, FINAL_GOAL - raised);
-
-          progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
-          progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
+          if (raised >= INITIAL_GOAL) {
+            barFill.textContent = Math.round(percentTotal) + '% of final goal';
+          } else {
+            barFill.textContent = Math.round(percentInitial) + '% of initial goal';
+          }
 
           labelsContainer.innerHTML = '';
-          labelsContainer.appendChild(svg);
 
-          const initialLabel = createLabel(initialBgWidth, `Initial goal<br>$${INITIAL_GOAL.toLocaleString()}`);
-          const finalLabel = createLabel(100, `Final goal<br>$${FINAL_GOAL.toLocaleString()}`);
-
+          const initialLabel = createLabel(
+            (INITIAL_GOAL / FINAL_GOAL) * 100,
+            'Initial goal<br>$10,000'
+          );
           labelsContainer.appendChild(initialLabel);
+
+          const finalLabel = createLabel(100, 'Final goal<br>$12,000');
           labelsContainer.appendChild(finalLabel);
 
           adjustLabels(initialLabel, finalLabel);
           drawIndicatorLines(initialLabel, finalLabel);
+
+          if (raised >= INITIAL_GOAL) {
+            const remaining = FINAL_GOAL - raised;
+            progressLine1.textContent = `Ngā mihi for helping us meet our initial $10,000 goal, we're only $${remaining.toLocaleString()} away from meeting our final $12,000 goal!`;
+            progressLine2.textContent = '';
+          } else {
+            const remainingInitial = INITIAL_GOAL - raised;
+            const remainingFinal = FINAL_GOAL - raised;
+            progressLine1.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $10,000 goal, and $${remainingFinal.toLocaleString()} from meeting our final $12,000 goal!`;
+            progressLine2.textContent = '';
+          }
         })
         .catch(err => {
-          console.error(err);
-          barFill.textContent = 'Error loading';
+          barFill.textContent = 'Error loading progress';
           progressLine1.textContent = '';
           progressLine2.textContent = '';
+          countdownTimer.textContent = '';
+          console.error(err);
         });
     }
 
-    function updateTimer() {
-      const now = new Date();
-
-      const targetYear = 2025;
-      const targetMonth = 7; // July
-      const targetDay = 6;
-      const targetHour = 23;
-      const targetMinute = 59;
-
-      // NZST is UTC+12 in July (no daylight savings)
-      // So target UTC time = July 6, 2025 23:59 NZST = July 6, 2025 11:59 -12 hours UTC
-      const targetTimeUTC = Date.UTC(targetYear, targetMonth - 1, targetDay, targetHour - 12, targetMinute, 0);
-
-      const diff = targetTimeUTC - now.getTime();
-
-      if (diff <= 0) {
-        countdownTimer.textContent = 'The fundraiser has closed!';
-        return;
-      }
-
-      const seconds = Math.floor((diff / 1000) % 60);
-      const minutes = Math.floor((diff / 1000 / 60) % 60);
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-      countdownTimer.textContent =
-        `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds remaining`;
-    }
-
-    window.addEventListener('resize', update);
+    // Initial call
     update();
-    setInterval(() => {
+
+    // Update every 30 seconds
+    setInterval(update, 30000);
+
+    // Optional: handle window resize to reposition labels & redraw curves
+    window.addEventListener('resize', () => {
+      // Recreate labels & redraw curves on resize
       update();
-      updateTimer();
-    }, 1000);
+    });
   </script>
 </body>
 </html>
