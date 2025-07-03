@@ -99,6 +99,7 @@
       font-weight: bold;
       border-radius: 8px 0 0 8px;
       box-sizing: border-box;
+      transition: background 0.3s ease;
     }
 
     .progress-text {
@@ -262,8 +263,19 @@
           barFill.style.width = percentTotal + '%';
 
           if (raised >= INITIAL_GOAL) {
+            // Multi-color gradient fill for progress bar:
+            const percentBeyondInitial = Math.min(((raised - INITIAL_GOAL) / (FINAL_GOAL - INITIAL_GOAL)) * 100, 100);
+            const orangeWidth = 100 - percentBeyondInitial; // orange part width %
+            const yellowWidth = percentBeyondInitial;       // yellow part width %
+
+            barFill.style.background = 
+              `linear-gradient(to right, #dd824c 0%, #dd824c ${orangeWidth}%, #f4c421 ${orangeWidth}%, #f4c421 100%)`;
+
             barFill.textContent = Math.round(percentTotal) + '% of final goal';
           } else {
+            // Single color fill for initial progress:
+            barFill.style.background = '#f4c421';
+
             barFill.textContent = Math.round(percentInitial) + '% of initial goal';
           }
 
@@ -276,8 +288,7 @@
           progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
 
           if (raised >= INITIAL_GOAL) {
-            progressLine2.innerHTML = 
-              `We're only $${remainingFinal.toLocaleString()} away from meeting our final $${FINAL_GOAL.toLocaleString()} goal!<br>Ngā mihi nui for helping us reach our initial $${INITIAL_GOAL.toLocaleString()} goal!`;
+            progressLine2.textContent = `We're only $${remainingFinal.toLocaleString()} away from meeting our final $${FINAL_GOAL.toLocaleString()} goal!\nNgā mihi nui for helping us reach our initial $${INITIAL_GOAL.toLocaleString()} goal!`;
           } else {
             progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
           }
@@ -306,37 +317,40 @@
       const now = new Date();
 
       const targetYear = 2025;
-      const targetMonth = 7; // July
-      const targetDay = 6;
-      const targetHour = 23;
-      const targetMinute = 59;
+      const targetMonth = 7;  // August (0-based is 7 for August)
+      const targetDay = 31;
+      const targetDate = new Date(targetYear, targetMonth, targetDay, 23, 59, 59);
 
-      // NZST is UTC+12 in July (no daylight savings)
-      // So target UTC time = July 6, 2025 23:59 NZST = July 6, 2025 11:59 -12 hours UTC
-      const targetTimeUTC = Date.UTC(targetYear, targetMonth - 1, targetDay, targetHour - 12, targetMinute, 0);
-
-      const diff = targetTimeUTC - now.getTime();
+      let diff = targetDate - now;
 
       if (diff <= 0) {
-        countdownTimer.textContent = 'The fundraiser has closed!';
+        countdownTimer.textContent = "Final days of the fundraiser! Last chance to help!";
         return;
       }
 
-      const seconds = Math.floor((diff / 1000) % 60);
-      const minutes = Math.floor((diff / 1000 / 60) % 60);
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      diff -= days * (1000 * 60 * 60 * 24);
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      diff -= hours * (1000 * 60 * 60);
+      const minutes = Math.floor(diff / (1000 * 60));
 
-      countdownTimer.textContent =
-        `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds remaining`;
+      countdownTimer.textContent = `Only ${days} days, ${hours} hours, and ${minutes} minutes left in the fundraiser!`;
     }
 
-    window.addEventListener('resize', update);
+    window.addEventListener('resize', () => {
+      const initialLabel = labelsContainer.querySelector('.label-wrapper:nth-child(2)');
+      const finalLabel = labelsContainer.querySelector('.label-wrapper:nth-child(3)');
+      if (initialLabel && finalLabel) {
+        adjustLabels(initialLabel, finalLabel);
+        drawIndicatorLines(initialLabel, finalLabel);
+      }
+    });
+
+    // Initial call and interval updates
     update();
-    setInterval(() => {
-      update();
-      updateTimer();
-    }, 1000);
+    updateTimer();
+    setInterval(update, 60000); // update every 60 seconds
+    setInterval(updateTimer, 60000);
   </script>
 </body>
 </html>
