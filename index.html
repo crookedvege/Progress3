@@ -275,10 +275,20 @@
 
           progressLine1.textContent = `$${raised.toLocaleString()} raised!`;
 
-          if (raised >= INITIAL_GOAL) {
-            progressLine2.innerHTML = 
-              `We're only $${remainingFinal.toLocaleString()} away from meeting our final $${FINAL_GOAL.toLocaleString()} goal!<br>Ngā mihi nui for helping us reach our initial $${INITIAL_GOAL.toLocaleString()} goal!`;
-          } else {
+         if (raised >= FINAL_GOAL) {
+  // Remove labels and indicator lines
+  labelsContainer.innerHTML = ''; // removes labels and lines
+
+  // Replace progress text
+  progressLine2.innerHTML = `
+    Ngā mihi for helping us reach our theft-recovery fundraising goal of $12,000!<br>
+    If you'd like to donate to support our pay-what-you-can Ōtaki Vege Bag kaupapa, you can make a donation to help subsidise next season's vege bags for more whānau.
+  `;
+} else if (raised >= INITIAL_GOAL) {
+  progressLine2.innerHTML = 
+    `We're only $${remainingFinal.toLocaleString()} away from meeting our final $${FINAL_GOAL.toLocaleString()} goal!<br>Ngā mihi nui for helping us reach our initial $${INITIAL_GOAL.toLocaleString()} goal!`;
+} else {
+
             progressLine2.textContent = `We're only $${remainingInitial.toLocaleString()} from meeting initial $${INITIAL_GOAL.toLocaleString()} goal, and $${remainingFinal.toLocaleString()} from meeting our final $${FINAL_GOAL.toLocaleString()} goal!`;
           }
 
