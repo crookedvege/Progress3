@@ -1,4 +1,7 @@
 exports.handler = async function (event, context) {
+  console.log("AIRTABLE_API_KEY (first 8 chars):", process.env.AIRTABLE_API_KEY ? process.env.AIRTABLE_API_KEY.slice(0,8) : "NOT SET");
+  ...
+exports.handler = async function (event, context) {
   const API_KEY = process.env.AIRTABLE_API_KEY;
   const BASE_ID = "appWPBQxrTk0Z2Knj";
   const TABLE_NAME = "Progress";
