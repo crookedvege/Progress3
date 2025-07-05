@@ -1,9 +1,11 @@
-console.log("API Key starts with:", API_KEY ? API_KEY.substring(0,8) : "NO API KEY");
+const fetch = require('node-fetch');
 
 exports.handler = async function (event, context) {
   const API_KEY = process.env.AIRTABLE_API_KEY;
   const BASE_ID = "appWPBQxrTk0Z2Knj";
   const TABLE_NAME = "Progress";
+
+  console.log("API Key starts with:", API_KEY ? API_KEY.substring(0, 8) : "NO API KEY");
 
   const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
 
