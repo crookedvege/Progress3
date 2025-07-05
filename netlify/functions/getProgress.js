@@ -3,16 +3,31 @@ exports.handler = async function (event, context) {
   const BASE_ID = "appWPBQxrTk0Z2Knj";
   const TABLE_NAME = "Progress";
 
+  if (!API_KEY) {
+    console.error("Missing AIRTABLE_API_KEY environment variable");
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Missing API key" }),
+    };
+  }
+
   const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
 
   try {
+    console.log("Fetching Airtable data with URL:", url);
+    console.log("Using API key:", API_KEY.substring(0, 5) + "...");
+
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${API_KEY}`,
       },
     });
 
+    console.log("Airtable response status:", response.status, response.statusText);
+
     if (!response.ok) {
+      const text = await response.text();
+      console.error("Airtable API error response body:", text);
       return {
         statusCode: 500,
         body: JSON.stringify({ error: `Airtable API error: ${response.statusText}` }),
@@ -20,9 +35,12 @@ exports.handler = async function (event, context) {
     }
 
     const json = await response.json();
+    console.log("Airtable JSON response:", JSON.stringify(json));
+
     const data = json.records[0];
 
     if (!data || !data.fields) {
+      console.error("Airtable data missing fields or empty records");
       return {
         statusCode: 500,
         body: JSON.stringify({ error: "Airtable data missing fields" }),
@@ -32,14 +50,14 @@ exports.handler = async function (event, context) {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        progress: data.fields.Progress ?? null,
-        goal: data.fields.Goal ?? null,
-        total: data.fields["Donation Value Rollup (from Table 1)"] ?? null,
-        stretchGoal: 12000
+        progress: Number(data.fields.Progress) || 0,
+        goal: Number(data.fields.Goal) || 0,
+        total: Number(data.fields["Donation Value Rollup (from Table 1)"]) || 0,
+        stretchGoal: 12000,
       }),
     };
   } catch (err) {
