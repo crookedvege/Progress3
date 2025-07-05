@@ -1,16 +1,25 @@
 const fetch = require('node-fetch');
 
 exports.handler = async function (event, context) {
+  // DEBUG: Log all environment variables (TEMPORARY!)
+  console.log("ENVIRONMENT VARIABLES:", JSON.stringify(process.env, null, 2));
+
   const API_KEY = process.env.AIRTABLE_API_KEY;
   const BASE_ID = "appWPBQxrTk0Z2Knj";
   const TABLE_NAME = "Progress";
 
-  console.log("API Key starts with:", API_KEY ? API_KEY.substring(0, 8) : "NO API KEY");
+  if (!API_KEY) {
+    console.error("❌ Missing AIRTABLE_API_KEY environment variable.");
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Missing AIRTABLE_API_KEY environment variable" }),
+    };
+  }
 
   const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
 
-  console.log("Fetching Airtable data with URL:", url);
-  console.log("Using API key:", API_KEY ? API_KEY.substring(0, 8) + "..." : "NO_API_KEY");
+  console.log("✅ Using Airtable URL:", url);
+  console.log("✅ API Key starts with:", API_KEY.substring(0, 8) + "...");
 
   try {
     const response = await fetch(url, {
@@ -19,15 +28,18 @@ exports.handler = async function (event, context) {
       },
     });
 
-    console.log("Airtable response status:", response.status);
+    console.log("📡 Airtable response status:", response.status);
 
     const responseBody = await response.text();
-    console.log("Airtable response body:", responseBody);
+    console.log("📦 Airtable response body:", responseBody);
 
     if (!response.ok) {
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: `Airtable API error: ${response.statusText}`, details: responseBody }),
+        body: JSON.stringify({
+          error: `Airtable API error: ${response.statusText}`,
+          details: responseBody,
+        }),
       };
     }
 
@@ -55,7 +67,7 @@ exports.handler = async function (event, context) {
       }),
     };
   } catch (err) {
-    console.error("Server error:", err);
+    console.error("🔥 Server error:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Server error", message: err.message }),
