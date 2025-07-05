@@ -1,3 +1,5 @@
+console.log("API Key starts with:", API_KEY ? API_KEY.substring(0,8) : "NO API KEY");
+
 exports.handler = async function (event, context) {
   const API_KEY = process.env.AIRTABLE_API_KEY;
   const BASE_ID = "appWPBQxrTk0Z2Knj";
