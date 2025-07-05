@@ -1,9 +1,4 @@
-const fetch = require('node-fetch');
-
-exports.handler = async function (event, context) {
-  // DEBUG: Log all environment variables (TEMPORARY!)
-  console.log("ENVIRONMENT VARIABLES:", JSON.stringify(process.env, null, 2));
-
+export const handler = async (event, context) => {
   const API_KEY = process.env.AIRTABLE_API_KEY;
   const BASE_ID = "appWPBQxrTk0Z2Knj";
   const TABLE_NAME = "Progress";
@@ -16,54 +11,71 @@ exports.handler = async function (event, context) {
     };
   }
 
-  const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}`;
-
-  console.log("✅ Using Airtable URL:", url);
-  console.log("✅ API Key starts with:", API_KEY.substring(0, 8) + "...");
+  const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}`;
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`,
-      },
-    });
+    // Airtable pagination: fetch all pages and accumulate total donation value
+    let totalDonation = 0;
+    let offset = null;
+    let allRecords = [];
 
-    console.log("📡 Airtable response status:", response.status);
+    do {
+      const fetchUrl = offset ? `${url}?offset=${offset}` : url;
 
-    const responseBody = await response.text();
-    console.log("📦 Airtable response body:", responseBody);
+      const response = await fetch(fetchUrl, {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({
-          error: `Airtable API error: ${response.statusText}`,
-          details: responseBody,
-        }),
-      };
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("Airtable API error:", response.statusText, errorBody);
+        return {
+          statusCode: response.status,
+          body: JSON.stringify({
+            error: `Airtable API error: ${response.statusText}`,
+            details: errorBody,
+          }),
+        };
+      }
+
+      const json = await response.json();
+
+      if (!json.records || json.records.length === 0) {
+        break;
+      }
+
+      allRecords = allRecords.concat(json.records);
+
+      offset = json.offset || null;
+    } while (offset);
+
+    // Sum up "Donation Value Rollup (from Table 1)" field from all records
+    for (const record of allRecords) {
+      const val = record.fields["Donation Value Rollup (from Table 1)"];
+      if (typeof val === "number") {
+        totalDonation += val;
+      }
     }
 
-    const json = JSON.parse(responseBody);
-    const data = json.records[0];
-
-    if (!data || !data.fields) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Airtable data missing fields" }),
-      };
-    }
+    // Optional: fallback if no total found in rollups, try to get from first record progress or goal
+    const firstRecord = allRecords[0]?.fields || {};
+    const progress = firstRecord.Progress ?? null;
+    const goal = firstRecord.Goal ?? null;
 
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        progress: data.fields.Progress ?? null,
-        goal: data.fields.Goal ?? null,
-        total: data.fields["Donation Value Rollup (from Table 1)"] ?? null,
-        stretchGoal: 12000
+        progress,
+        goal,
+        total: totalDonation,
+        stretchGoal: 12000,
       }),
     };
   } catch (err) {
